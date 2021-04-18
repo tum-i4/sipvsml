@@ -1,9 +1,12 @@
 import argparse
 import pathlib
+import pickle
 import shutil
 
 import pandas as pd
 from tqdm import tqdm
+
+pickle.HIGHEST_PROTOCOL = 4
 
 
 def get_input_files(results_dir):
