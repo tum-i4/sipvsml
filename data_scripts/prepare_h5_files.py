@@ -1,10 +1,13 @@
 import argparse
 import pathlib
+import pickle
 
 import pandas as pd
 from tqdm import tqdm
 
 from extract_ir2vec_features import get_all_block_files
+
+pickle.HIGHEST_PROTOCOL = 4
 
 
 def parse_args():
