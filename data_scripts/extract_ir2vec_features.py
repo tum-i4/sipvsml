@@ -102,7 +102,7 @@ def main():
     vocab = read_vocab(args.path_to_vocabulary)
     with ProcessPoolExecutor(max_workers=10) as pool:
         args = get_processing_args(all_block_files, vocab)
-        print(sum(tqdm(list(pool.map(process_df, args)))))
+        print(sum(list(tqdm(pool.map(process_df, args)))))
 
 
 if __name__ == '__main__':
