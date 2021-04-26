@@ -1,6 +1,8 @@
 import argparse
 import pathlib
 import shutil
+import traceback
+from concurrent.futures import ProcessPoolExecutor
 
 import numpy as np
 import pandas as pd
@@ -69,27 +71,38 @@ def save_old_file(blocks_file_path, saved_blocks_file_path):
     shutil.move(blocks_file_path, saved_blocks_file_path)
 
 
-def process_df(blocks_file_path, saved_blocks_file_path, vocab):
-    blocks_df = read_blocks_df(blocks_file_path)
-    embeddings = blocks_df['w_63'].map(lambda x: get_ir_block_embedding(x, vocab))
-    new_df = get_new_df(embeddings)
-    new_blocks_df = pd.concat([blocks_df, new_df], axis=1)
-    del embeddings
-    save_old_file(blocks_file_path, saved_blocks_file_path)
-    write_new_df(blocks_file_path, new_blocks_df)
+def process_df(args):
+    try:
+        blocks_file_path, saved_blocks_file_path, vocab = args
+        blocks_df = read_blocks_df(blocks_file_path)
+        embeddings = blocks_df['w_63'].map(lambda x: get_ir_block_embedding(x, vocab))
+        new_df = get_new_df(embeddings)
+        new_blocks_df = pd.concat([blocks_df, new_df], axis=1)
+        del embeddings
+        save_old_file(blocks_file_path, saved_blocks_file_path)
+        write_new_df(blocks_file_path, new_blocks_df)
+        return True
+    except Exception:
+        traceback.print_exc()
+
+
+def get_processing_args(all_block_files, vocab):
+    args = []
+    for blocks_file_path in all_block_files:
+        saved_blocks_file_path = blocks_file_path.with_name('blocks.csv.saved')
+        if saved_blocks_file_path.exists():
+            continue
+        args.append([blocks_file_path, saved_blocks_file_path, vocab])
+    return args
 
 
 def main():
     args = parse_args()
     all_block_files = list(get_all_block_files(pathlib.Path(args.labeled_bc_dir)))
     vocab = read_vocab(args.path_to_vocabulary)
-
-    for blocks_file_path in tqdm(all_block_files):
-        saved_blocks_file_path = blocks_file_path.with_name('blocks.csv.saved')
-        if saved_blocks_file_path.exists():
-            continue
-
-        process_df(blocks_file_path, saved_blocks_file_path, vocab)
+    with ProcessPoolExecutor(max_workers=10) as pool:
+        args = get_processing_args(all_block_files, vocab)
+        print(sum(tqdm(list(pool.map(process_df, args)))))
 
 
 if __name__ == '__main__':
