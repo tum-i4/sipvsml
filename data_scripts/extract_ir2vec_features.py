@@ -58,7 +58,7 @@ def get_new_df(embeddings):
 
 
 def write_new_df(blocks_file_path, new_blocks_df):
-    new_blocks_df.to_csv(
+    new_blocks_df.reset_index().to_csv(
         blocks_file_path,
         line_terminator='\r',
         sep=';',
@@ -90,8 +90,12 @@ def get_processing_args(all_block_files, vocab):
     args = []
     for blocks_file_path in all_block_files:
         saved_blocks_file_path = blocks_file_path.with_name('blocks.csv.saved')
-        if saved_blocks_file_path.exists():
-            continue
+        if not blocks_file_path.exists():
+            if saved_blocks_file_path.exists():
+                shutil.move(saved_blocks_file_path, blocks_file_path)
+        else:
+            if saved_blocks_file_path.exists():
+                continue
         args.append([blocks_file_path, saved_blocks_file_path, vocab])
     return args
 
@@ -100,7 +104,7 @@ def main():
     args = parse_args()
     all_block_files = list(get_all_block_files(pathlib.Path(args.labeled_bc_dir)))
     vocab = read_vocab(args.path_to_vocabulary)
-    with ProcessPoolExecutor(max_workers=10) as pool:
+    with ProcessPoolExecutor(max_workers=6) as pool:
         args = get_processing_args(all_block_files, vocab)
         print(sum(list(tqdm(pool.map(process_df, args)))))
 
