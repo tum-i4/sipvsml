@@ -17,7 +17,7 @@ def parse_args():
 
 
 def get_all_block_files(labeled_bc_dir):
-    for sub_folder in ['mibench-cov', 'simple-cov']:
+    for sub_folder in ['simple-cov', 'mibench-cov']:
         for data_dir in (labeled_bc_dir / sub_folder).iterdir():
             yield data_dir / 'blocks.csv'
 
