@@ -40,6 +40,7 @@ def process_block_file(block_file_path):
         store.put('edges', chunk, format='t', append=True, data_columns=True)
         read_size = read_size + chunk_size
         print('Read node elements:', read_size)
+    store.close()
 
     del node_data["w_63"]
     print('Writing to nodes.h5...')
