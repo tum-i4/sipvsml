@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from data_scripts.tfidf import extractTFIDFMemoryFriendly
+from tfidf import extractTFIDFMemoryFriendly
 from ir_line_parser import get_instruction_embedding, read_vocab
 
 
