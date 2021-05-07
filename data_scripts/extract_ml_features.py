@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
+from data_scripts.tfidf import extractTFIDFMemoryFriendly
 from ir_line_parser import get_instruction_embedding, read_vocab
 
 
@@ -50,7 +51,7 @@ def get_new_df(embeddings):
     data = []
     embedding_size = len(embeddings[0])
     for index, embedding in embeddings.items():
-        row = {f'w_{i + 64}': num for i, num in zip(range(embedding_size), embedding)}
+        row = {f'w_{i + 264}': num for i, num in zip(range(embedding_size), embedding)}
         row['uid'] = index
         data.append(row)
     new_df = pd.DataFrame(data).set_index('uid')
@@ -71,15 +72,24 @@ def save_old_file(blocks_file_path, saved_blocks_file_path):
     shutil.move(blocks_file_path, saved_blocks_file_path)
 
 
+def get_tf_idf(node_data):
+    tfidf_count = 200
+    tfidfdf = extractTFIDFMemoryFriendly(node_data['w_63'], maxfeatures=tfidf_count, data_path='')
+    tfidfdf = tfidfdf.rename(columns=lambda x: 'w_' + str(int(x) + 64))
+    tfidfdf['uid'] = node_data.index
+    tfidfdf.set_index('uid', inplace=True)
+    return tfidfdf
+
+
 def process_df(args):
     try:
         blocks_file_path, saved_blocks_file_path, vocab = args
         blocks_df = read_blocks_df(blocks_file_path)
         embeddings = blocks_df['w_63'].map(lambda x: get_ir_block_embedding(x, vocab))
         new_df = get_new_df(embeddings)
-        new_blocks_df = pd.concat([blocks_df, new_df], axis=1)
         del embeddings
-        save_old_file(blocks_file_path, saved_blocks_file_path)
+        tf_idf = get_tf_idf(blocks_df)
+        new_blocks_df = pd.concat([blocks_df, tf_idf, new_df], axis=1)
         write_new_df(blocks_file_path, new_blocks_df)
         return True
     except Exception:
@@ -106,7 +116,7 @@ def main():
     vocab = read_vocab(args.path_to_vocabulary)
     with ProcessPoolExecutor(max_workers=6) as pool:
         args = get_processing_args(all_block_files, vocab)
-        print(sum(list(tqdm(pool.map(process_df, args)))))
+        print(sum(list(tqdm(map(process_df, args)))))
 
 
 if __name__ == '__main__':

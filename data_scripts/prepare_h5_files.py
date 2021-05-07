@@ -5,7 +5,7 @@ import pickle
 import pandas as pd
 from tqdm import tqdm
 
-from extract_ir2vec_features import get_all_block_files
+from extract_ml_features import get_all_block_files
 
 pickle.HIGHEST_PROTOCOL = 4
 
@@ -20,7 +20,7 @@ def process_block_file(block_file_path):
     chunk_size = 975000000
     read_size = 0
     column_names = ['uid'] + ['w_{}'.format(ii) for ii in range(64)] + ['program', 'subject'] + \
-                   ['w_{}'.format(64 + ii) for ii in range(300)]
+                   ['w_{}'.format(64 + ii) for ii in range(300 + 200)]  # include tf-idf featues
     node_data = pd.read_csv(
         block_file_path, lineterminator='\r', sep=';', header=None,
         index_col=False, dtype={'uid': object}, names=column_names
