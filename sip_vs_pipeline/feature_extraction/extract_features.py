@@ -5,6 +5,7 @@ from tqdm import tqdm
 
 from sip_vs_pipeline.feature_extraction.extractor_base import FeatureExtractor, CompositeExtractor
 from sip_vs_pipeline.feature_extraction.ir2vec import IR2VecExtractor
+from sip_vs_pipeline.feature_extraction.tfidf import extract_tf_idf_memory_friendly
 from sip_vs_pipeline.utils import write_blocks_df, read_blocks_df, get_all_block_files
 
 TF_IDF_FEATURE_EXTRACTOR = 'tf_idf'
@@ -14,19 +15,25 @@ IR2VEC_VOCAB_PATH = pathlib.Path(__file__).parent / 'ir2vec_seed_embeddings.txt'
 
 
 class TfIdfExtractor(FeatureExtractor):
-    def __init__(self, name, rewrite=False) -> None:
+    def __init__(self, name, rewrite=False, feature_count=200) -> None:
         super().__init__(name, rewrite)
+        self._feature_count = feature_count
 
-    def _extract_features(self, blocks_df, features_output_csv_path):
-        return blocks_df
+    def _extract_features(self, blocks_df):
+        tf_idf_df = extract_tf_idf_memory_friendly(blocks_df['w_63'], maxfeatures=self._feature_count, data_path='/tmp')
+        tf_idf_df = tf_idf_df.rename(columns=lambda x: 'w_' + str(int(x) + 64))
+        tf_idf_df['uid'] = blocks_df.index
+        tf_idf_df.set_index('uid', inplace=True)
+        return tf_idf_df
 
 
 class SegExtractor(FeatureExtractor):
-    def __init__(self, name, rewrite=False) -> None:
+    def __init__(self, name, rewrite=False, num_features=63) -> None:
         super().__init__(name, rewrite)
+        self._num_features = num_features
 
-    def _extract_features(self, blocks_df, features_output_csv_path):
-        return blocks_df
+    def _extract_features(self, blocks_df):
+        return blocks_df[[f'w_{i}' for i in range(63)]]
 
 
 def parse_args():

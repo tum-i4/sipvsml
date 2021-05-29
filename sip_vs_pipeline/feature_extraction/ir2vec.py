@@ -16,7 +16,7 @@ class IR2VecExtractor(FeatureExtractor):
         self.wt = wt
         self.wa = wa
 
-    def _extract_features(self, blocks_df, features_output_csv_path):
+    def _extract_features(self, blocks_df):
         generalized_blocks = blocks_df['generalized_block']
         embeddings = generalized_blocks.map(self._get_block_embedding)
         df = pd.DataFrame(embeddings.tolist(), index=embeddings.index)
