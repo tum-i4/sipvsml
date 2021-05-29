@@ -55,20 +55,32 @@ def get_all_block_files(labeled_bc_dir):
             yield data_dir / 'blocks.csv'
 
 
+def get_block_file_header(blocks_file_path):
+    with open(blocks_file_path) as inp:
+        first_line = inp.readline().strip()
+        if first_line.startswith('uid'):
+            return first_line.split(';')
+        return None
+
+
 def read_blocks_df(blocks_file_path):
-    feature_names = ["w_{}".format(ii) for ii in range(64)]
-    column_names = ['uid'] + feature_names + ["program"] + ["subject"]
+    header = get_block_file_header(blocks_file_path)
     blocks_df = pd.read_csv(
         blocks_file_path,
         lineterminator='\r',
         sep=';',
-        header=None,
+        header=None if header is None else 'infer',
         index_col=False,
         dtype={'uid': object},
-        names=column_names
+        names=get_default_block_columns() if header is None else None
     )
     blocks_df.set_index('uid', inplace=True)
     return blocks_df
+
+
+def get_default_block_columns():
+    feature_names = ["w_{}".format(ii) for ii in range(64)]
+    return ['uid'] + feature_names + ["program"] + ["subject"]
 
 
 def process_df(preprocessor, blocks_file_path):
@@ -86,7 +98,7 @@ def write_blocks_df(blocks_file_path, updated_block_df):
         blocks_file_path,
         line_terminator='\r',
         sep=';',
-        header=False,
+        header=True,
         index=False
     )
 
