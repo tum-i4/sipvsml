@@ -112,7 +112,7 @@ class GraphSageSIPLocalizer:
             class_weight=class_weights,
         )
         # save test metrics
-        test_metrics = model.evaluate_generator(test_gen)
+        test_metrics = model.evaluate(test_gen)
         print('Test Set Metrics:')
         output_results['test_metrics'] = []
         for name, val in zip(model.metrics_names, test_metrics):
@@ -121,7 +121,7 @@ class GraphSageSIPLocalizer:
 
         test_nodes = test_data.index
         test_mapper = generator.flow(test_nodes)
-        test_predictions = model.predict_generator(test_mapper)
+        test_predictions = model.predict(test_mapper)
         node_predictions = target_encoding.inverse_transform(test_predictions)
         results = pd.DataFrame(node_predictions, index=test_nodes).idxmax(axis=1)
         df = pd.DataFrame({'Predicted': results, 'True': test_data['subject']})  # , "program":test_data['program']})
