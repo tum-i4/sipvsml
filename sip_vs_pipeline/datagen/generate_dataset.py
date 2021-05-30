@@ -3,7 +3,7 @@ import pathlib
 import subprocess
 
 IMAGE_NAME = 'smwyg'
-GEN_PROTECTED_BINARIES_SH_PATH = pathlib.Path(__file__).parent / 'generate-protected-binaries.sh'
+GEN_PROTECTED_BINARIES_SH_PATH = pathlib.Path(__file__).absolute().parent / 'generate-protected-binaries.sh'
 SMWYG_GIT_REPOSITORY = 'https://github.com/mr-ma/smwyg-artifact.git'
 
 
