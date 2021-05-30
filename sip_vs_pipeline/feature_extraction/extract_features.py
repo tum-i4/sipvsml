@@ -28,12 +28,16 @@ class TfIdfExtractor(FeatureExtractor):
 
 
 class SegExtractor(FeatureExtractor):
-    def __init__(self, name, rewrite=False, num_features=63) -> None:
+    def __init__(self, name, rewrite=False, num_features=63, cleanup_blocks=True) -> None:
         super().__init__(name, rewrite)
         self._num_features = num_features
+        self._cleanup_blocks = cleanup_blocks
 
     def _extract_features(self, blocks_df):
-        return blocks_df[[f'w_{i}' for i in range(63)]]
+        features_df = blocks_df[[f'w_{i}' for i in range(63)]]
+        if self._cleanup_blocks:
+            blocks_df.drop(columns=[col for col in blocks_df.columns if col.startswith('w')], inplace=True)
+        return features_df
 
 
 def parse_args():
@@ -71,7 +75,6 @@ def process_blocks(extractor, blocks_file_path):
 def main():
     args = parse_args()
     labeled_bc_dir = pathlib.Path(args.labeled_bc_dir)
-
     all_block_files = list(get_all_block_files(labeled_bc_dir))
     extractor = create_feature_extractors(args.feature_extractor)
     for block_file in tqdm(all_block_files, desc='extracting features'):

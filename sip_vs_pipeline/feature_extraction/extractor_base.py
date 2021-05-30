@@ -27,12 +27,10 @@ class CompositeExtractor(FeatureExtractor):
     def __init__(self, name: str, *extractors: FeatureExtractor, rewrite=False) -> None:
         super().__init__(name, rewrite)
         self._extractors = extractors
-        self._binaries_dir = None
 
     def extract(self, binaries_dir, blocks_df):
-        self._binaries_dir = binaries_dir
         for extractor in self._extractors:
-            blocks_df = extractor.extract(self._binaries_dir, blocks_df)
+            blocks_df = extractor.extract(binaries_dir, blocks_df)
         return blocks_df
 
     def _extract_features(self, blocks_df):
