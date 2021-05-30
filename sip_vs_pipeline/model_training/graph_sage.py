@@ -38,43 +38,52 @@ def build_gnx_network(relations_df):
 
 
 class GraphSageSIPLocalizer:
-    num_epochs = 7
-    k_folds = 10
+    def __init__(self, num_epochs=7, k_folds=10, batch_size=50) -> None:
+        super().__init__()
+        self.num_epochs = num_epochs
+        self.k_folds = k_folds
+        self.batch_size = batch_size
 
     def train(self, dataset):
         target_feature_name = dataset.target_feature_name
-        training_results = {}
+        training_results = []
         for data_dict in dataset.iter_sub_datasets():
-            training_results['asd'] = self._run_train(data_dict, target_feature_name)
+            training_results.append({
+                'data_source': data_dict['data_source'].name,
+                'data_dir': data_dict['data_dir'].name,
+                'results': self._run_train(data_dict, target_feature_name)
+            })
+
+        return training_results
 
     def _train_model(self, gnx, train_data, test_data, all_features):
-        output_results = {}
-
         subject_groups_train = Counter(train_data['subject'])
         subject_groups_test = Counter(test_data['subject'])
-        output_results['train_size'] = len(train_data)
-        output_results['test_size'] = len(test_data)
-        output_results['subject_groups_train'] = subject_groups_train
-        output_results['subject_groups_test'] = subject_groups_test
 
-        # node_features = train_data[feature_names]
         graph = sg.StellarGraph(gnx, node_features=all_features)
 
-        output_results['graph_info'] = graph.info()
+        output_results = {
+            'train_size': len(train_data),
+            'test_size': len(test_data),
+            'subject_groups_train': subject_groups_train,
+            'subject_groups_test': subject_groups_test,
+            'graph_info': graph.info()
+        }
 
-        batch_size = 50
         num_samples = [10, 5]
-        generator = GraphSAGENodeGenerator(graph, batch_size, num_samples)
+        generator = GraphSAGENodeGenerator(graph, self.batch_size, num_samples)
 
         target_encoding = feature_extraction.DictVectorizer(sparse=False)
         train_targets = target_encoding.fit_transform(train_data[['subject']].to_dict('records'))
         class_weights = class_weight.compute_class_weight(
-            'balanced', np.unique(train_data['subject'].to_list()), train_data['subject'].to_list()
+            class_weight='balanced',
+            classes=np.unique(train_data['subject'].to_list()),
+            y=train_data['subject'].to_list()
         )
         class_weights = dict(enumerate(class_weights))
         test_targets = target_encoding.transform(test_data[['subject']].to_dict('records'))
         train_gen = generator.flow(train_data.index, train_targets, shuffle=True)
-        graphsage_model = GraphSAGE(
+        graph_sage_model = GraphSAGE(
             layer_sizes=[80, 80],
             generator=generator,  # train_gen,
             bias=True,
@@ -82,19 +91,19 @@ class GraphSageSIPLocalizer:
         )
         print('building model...')
 
-        x_inp, x_out = graphsage_model.build()
+        x_inp, x_out = graph_sage_model.build()
         prediction = layers.Dense(units=train_targets.shape[1], activation="softmax")(x_out)
 
         model = Model(inputs=x_inp, outputs=prediction)
         print('compiling model...')
         model.compile(
-            optimizer=optimizers.Adam(lr=0.005),
+            optimizer=optimizers.Adam(learning_rate=0.005),
             loss=losses.categorical_crossentropy,
             metrics=['acc', metrics.categorical_accuracy],
         )
         print('testing the model...')
         test_gen = generator.flow(test_data.index, test_targets)
-        history = model.fit_generator(
+        history = model.fit(
             train_gen,
             epochs=self.num_epochs,
             validation_data=test_gen,
@@ -144,7 +153,7 @@ class GraphSageSIPLocalizer:
 
         skf = StratifiedKFold(n_splits=self.k_folds, random_state=12321, shuffle=True)
         classifier_results = []
-        kfold_samples = []
+        k_fold_samples = []
         output_results = {}
         i = 1
         for train_index, test_index in skf.split(node_data, node_data[target_feature_name].values.ravel()):
@@ -155,7 +164,7 @@ class GraphSageSIPLocalizer:
                 gnx, train_data, test_data, all_features
             )
             classifier_results.append(out_result['classifier'])
-            kfold_samples.append({
+            k_fold_samples.append({
                 'train_size': out_result['train_size'],
                 'test_size': out_result['train_size'],
                 'subject_groups_train': out_result['subject_groups_train'],
@@ -164,7 +173,7 @@ class GraphSageSIPLocalizer:
             output_results = out_result
 
         output_results['Kfold_results'] = classifier_results
-        output_results['Kfold_samples'] = kfold_samples
+        output_results['Kfold_samples'] = k_fold_samples
         output_results['classifier'] = average_classifiers(classifier_results)
 
         return output_results
