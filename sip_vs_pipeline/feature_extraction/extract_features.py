@@ -65,9 +65,7 @@ def create_feature_extractors(feature_extractor):
 def process_blocks(extractor, blocks_file_path):
     blocks_df = read_blocks_df(blocks_file_path)
     updated_block_df = extractor.extract(blocks_file_path.parent, blocks_df)
-
-    if updated_block_df.equals(blocks_df):
-        write_blocks_df(blocks_file_path, updated_block_df)
+    write_blocks_df(blocks_file_path, updated_block_df)
 
 
 def main():

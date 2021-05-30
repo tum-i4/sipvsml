@@ -30,8 +30,19 @@ def read_blocks_df(blocks_file_path):
     return blocks_df
 
 
+def read_relations_df(relations_file_path):
+    return pd.read_csv(
+        relations_file_path,
+        index_col=False,
+        sep=';',
+        header=None,
+        names=['source', 'target', 'label'],
+        dtype={'source': object, 'target': object},
+    )
+
+
 def get_all_block_files(labeled_bc_dir):
-    for sub_folder in ['simple-cov', 'mibench-cov']:
+    for sub_folder in labeled_bc_dir.iterdir():
         for data_dir in (labeled_bc_dir / sub_folder).iterdir():
             yield data_dir / 'blocks.csv'
 
