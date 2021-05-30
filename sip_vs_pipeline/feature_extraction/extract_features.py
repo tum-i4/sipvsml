@@ -57,7 +57,7 @@ def create_feature_extractors(feature_extractor):
         return CompositeExtractor(
             'all',
             TfIdfExtractor(TF_IDF_FEATURE_EXTRACTOR),
-            IR2VecExtractor(TF_IDF_FEATURE_EXTRACTOR, IR2VEC_VOCAB_PATH),
+            IR2VecExtractor(IR2VEC_FEATURE_EXTRACTOR, IR2VEC_VOCAB_PATH),
             SegExtractor(SEG_FEATURE_EXTRACTOR)
         )
 

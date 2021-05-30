@@ -31,9 +31,9 @@ class CompositeExtractor(FeatureExtractor):
 
     def extract(self, binaries_dir, blocks_df):
         self._binaries_dir = binaries_dir
-        return super().extract(binaries_dir, blocks_df)
-
-    def _extract_features(self, blocks_df):
         for extractor in self._extractors:
             blocks_df = extractor.extract(self._binaries_dir, blocks_df)
+        return blocks_df
+
+    def _extract_features(self, blocks_df):
         return blocks_df
