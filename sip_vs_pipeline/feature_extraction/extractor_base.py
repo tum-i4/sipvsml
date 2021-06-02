@@ -8,7 +8,7 @@ class FeatureExtractor:
         return f'{self.name}_extractor'
 
     def extract(self, binaries_dir, blocks_df):
-        features_csv_path = binaries_dir / f'{self.name}.features.csv'
+        features_csv_path = binaries_dir / f'{self.name}.features.csv.gz'
         if features_csv_path.exists() and not self.rewrite:
             return blocks_df
         features_df = self._extract_features(blocks_df)

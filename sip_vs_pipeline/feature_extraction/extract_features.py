@@ -1,5 +1,6 @@
 import argparse
 import pathlib
+from concurrent.futures import ProcessPoolExecutor
 
 from tqdm import tqdm
 
@@ -42,6 +43,7 @@ class SegExtractor(FeatureExtractor):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Extract features from protected binaries')
+    parser.add_argument('--path_to_ir2vec_vocab', help='Path to ir2vec vocabulary', default=IR2VEC_VOCAB_PATH)
     parser.add_argument('--feature_extractor', choices=[
         TF_IDF_FEATURE_EXTRACTOR, IR2VEC_FEATURE_EXTRACTOR, SEG_FEATURE_EXTRACTOR, 'all'
     ], help='Name of the feature extractor to use')
@@ -66,7 +68,8 @@ def create_feature_extractors(feature_extractor):
         )
 
 
-def process_blocks(extractor, blocks_file_path):
+def process_blocks(args):
+    extractor, blocks_file_path = args
     blocks_df = read_blocks_df(blocks_file_path)
     updated_block_df = extractor.extract(blocks_file_path.parent, blocks_df)
     write_blocks_df(blocks_file_path, updated_block_df)
@@ -75,10 +78,16 @@ def process_blocks(extractor, blocks_file_path):
 def main():
     args = parse_args()
     labeled_bc_dir = pathlib.Path(args.labeled_bc_dir)
-    all_block_files = list(get_files_from_bc_dir(labeled_bc_dir, 'blocks.feather'))
+    all_block_files = get_files_from_bc_dir(labeled_bc_dir, 'blocks.csv.gz')
     extractor = create_feature_extractors(args.feature_extractor)
-    for block_file in tqdm(all_block_files, desc='extracting features'):
-        process_blocks(extractor, block_file)
+
+    with ProcessPoolExecutor() as process_pool:
+        args = [(extractor, block_file) for block_file in all_block_files]
+        list(tqdm(
+            process_pool.map(process_blocks, args),
+            total=len(args),
+            desc='extracting features'
+        ))
 
 
 if __name__ == '__main__':
