@@ -6,7 +6,7 @@ from tqdm import tqdm
 from sip_vs_pipeline.feature_extraction.extractor_base import FeatureExtractor, CompositeExtractor
 from sip_vs_pipeline.feature_extraction.ir2vec import IR2VecExtractor
 from sip_vs_pipeline.feature_extraction.tfidf import extract_tf_idf_memory_friendly
-from sip_vs_pipeline.utils import write_blocks_df, read_blocks_df, get_all_block_files
+from sip_vs_pipeline.utils import write_blocks_df, read_blocks_df, get_files_from_bc_dir
 
 TF_IDF_FEATURE_EXTRACTOR = 'tf_idf'
 IR2VEC_FEATURE_EXTRACTOR = 'ir2vec'
@@ -75,7 +75,7 @@ def process_blocks(extractor, blocks_file_path):
 def main():
     args = parse_args()
     labeled_bc_dir = pathlib.Path(args.labeled_bc_dir)
-    all_block_files = list(get_all_block_files(labeled_bc_dir))
+    all_block_files = list(get_files_from_bc_dir(labeled_bc_dir, 'blocks.feather'))
     extractor = create_feature_extractors(args.feature_extractor)
     for block_file in tqdm(all_block_files, desc='extracting features'):
         process_blocks(extractor, block_file)
