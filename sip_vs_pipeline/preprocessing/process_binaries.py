@@ -1,12 +1,12 @@
 import argparse
 import pathlib
+from concurrent.futures import ProcessPoolExecutor
 
 from tqdm import tqdm
 
 from sip_vs_pipeline.preprocessing.pre_processor import ComposePP, Ir2VecInstructionGen, \
     CompressToZip, RemoveCsvFiles, RemoveRawBinaries
-from sip_vs_pipeline.utils import write_blocks_df, read_blocks_df, read_relations_df, \
-    write_relations_df, get_protected_bc_dirs
+from sip_vs_pipeline.utils import get_protected_bc_dirs
 
 
 def parse_args():
@@ -28,17 +28,6 @@ def parse_args():
     )
     args = parser.parse_args()
     return args
-
-
-def process_df(preprocessor, blocks_file_path, relations_file_path, output_format):
-    blocks_df = read_blocks_df(blocks_file_path)
-    updated_block_df = preprocessor.update_block_df(blocks_df)
-    write_blocks_df(blocks_file_path.with_suffix(output_format), updated_block_df)
-
-    relations_df = read_relations_df(relations_file_path)
-    relations_df = preprocessor.update_relations_df(relations_df)
-    write_relations_df(relations_file_path.with_suffix(output_format), relations_df)
-    return True
 
 
 def create_preprocessor(preprocessor):
@@ -65,8 +54,12 @@ def main():
 
     preprocessor = create_preprocessor(args.preprocessor)
     bc_dirs = list(get_protected_bc_dirs(labeled_bc_dir))
-    for protected_bc_dir in tqdm(bc_dirs, desc='preprocessing binaries'):
-        preprocessor.run(protected_bc_dir)
+    with ProcessPoolExecutor() as process_pool:
+        list(tqdm(
+            process_pool.map(preprocessor.run, bc_dirs),
+            total=len(bc_dirs),
+            desc='preprocessing binaries'
+        ))
 
 
 if __name__ == '__main__':
