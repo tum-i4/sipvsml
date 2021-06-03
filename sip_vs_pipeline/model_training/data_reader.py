@@ -19,8 +19,8 @@ class SIPDataSet:
     def iter_sub_datasets(self, combine_features=True):
         for sub_folder in self._labeled_bc_dir.iterdir():
             for data_dir in (self._labeled_bc_dir / sub_folder).iterdir():
-                block_csv_file_path = data_dir / 'blocks.csv'
-                relations_file_path = data_dir / 'relations.csv'
+                block_csv_file_path = data_dir / 'blocks.csv.gz'
+                relations_file_path = data_dir / 'relations.csv.gz'
                 blocks_df = read_blocks_df(block_csv_file_path)[[self.target_feature_name]]
                 relations_df = read_relations_df(relations_file_path)
                 yield {
@@ -47,13 +47,13 @@ class SIPDataSet:
         return res
 
     def _read_ir2vec_features(self, data_dir):
-        return self._read_features_csv_file(data_dir / 'ir2vec.features.csv')
+        return self._read_features_csv_file(data_dir / 'ir2vec.features.csv.gz')
 
     def _read_graph_features(self, data_dir):
-        return self._read_features_csv_file(data_dir / 'seg.features.csv')
+        return self._read_features_csv_file(data_dir / 'seg.features.csv.gz')
 
     def _read_tf_idf_features(self, data_dir):
-        return self._read_features_csv_file(data_dir / 'tf_idf.features.csv')
+        return self._read_features_csv_file(data_dir / 'tf_idf.features.csv.gz')
 
     def _read_features_csv_file(self, file_path):
         df = pd.read_csv(file_path, header=None, dtype={0: object}).set_index(0)
