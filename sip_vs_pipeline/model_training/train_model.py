@@ -32,10 +32,19 @@ def create_model(model_name):
 
 
 def run(labeled_bc_dir, model_name, features, results_file_name):
-    model = create_model(model_name)
     dataset = SIPDataSet(features, labeled_bc_dir)
     start_time = datetime.now()
-    model.train(dataset, results_file_name)
+
+    target_feature_name = dataset.target_feature_name
+    for data_dict in dataset.iter_sub_datasets():
+        results_path = data_dict['data_dir'] / results_file_name
+        if results_path.exists():
+            print(f'{results_path} already exists, exiting...')
+
+        model = create_model(model_name)
+        results_data = model.train(data_dict, target_feature_name)
+        write_json(results_data, results_path)
+
     elapsed = datetime.now() - start_time
     training_results_path = f"training_run_{start_time.strftime('%Y-%M-%d_%H-%m-%S')}.json"
     write_json({

@@ -12,8 +12,6 @@ from stellargraph.layer import GraphSAGE
 from stellargraph.mapper import GraphSAGENodeGenerator
 from tensorflow.keras import layers, optimizers, losses, metrics, Model
 
-from sip_vs_pipeline.utils import write_json
-
 
 def average_classifiers(classifiers):
     labels = ['sc_guard', 'cfi_verify', 'oh_verify', 'none']
@@ -46,19 +44,13 @@ class GraphSageSIPLocalizer:
         self.k_folds = k_folds
         self.batch_size = batch_size
 
-    def train(self, dataset, results_file_name):
-        target_feature_name = dataset.target_feature_name
-        for data_dict in dataset.iter_sub_datasets():
-            results_path = data_dict['data_dir'] / results_file_name
-            if results_path.exists():
-                print(f'{results_path} already exists, exiting...')
-
-            results_data = {
-                'data_source': data_dict['data_source'].name,
-                'data_dir': data_dict['data_dir'].name,
-                'results': self._run_train(data_dict, target_feature_name)
-            }
-            write_json(results_data, results_path)
+    def train(self, data_dict, target_feature_name):
+        results_data = {
+            'data_source': data_dict['data_source'].name,
+            'data_dir': data_dict['data_dir'].name,
+            'results': self._run_train(data_dict, target_feature_name)
+        }
+        return results_data
 
     def _run_train(self, data_dict, target_feature_name):
         all_features = data_dict['features']
