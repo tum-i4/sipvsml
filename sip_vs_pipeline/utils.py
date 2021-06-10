@@ -1,3 +1,5 @@
+import json
+
 import pandas as pd
 
 
@@ -47,3 +49,8 @@ def get_protected_bc_dirs(labeled_bc_dir):
     for sub_folder in labeled_bc_dir.iterdir():
         for data_dir in sub_folder.iterdir():
             yield data_dir
+
+
+def write_json(training_res, training_results_path):
+    with open(training_results_path, 'w', encoding='utf-8') as out:
+        json.dump(training_res, out, ensure_ascii=False, indent=4)

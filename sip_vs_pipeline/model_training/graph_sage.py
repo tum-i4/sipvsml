@@ -12,6 +12,8 @@ from stellargraph.layer import GraphSAGE
 from stellargraph.mapper import GraphSAGENodeGenerator
 from tensorflow.keras import layers, optimizers, losses, metrics, Model
 
+from sip_vs_pipeline.utils import write_json
+
 
 def average_classifiers(classifiers):
     labels = ['sc_guard', 'cfi_verify', 'oh_verify', 'none']
@@ -44,17 +46,52 @@ class GraphSageSIPLocalizer:
         self.k_folds = k_folds
         self.batch_size = batch_size
 
-    def train(self, dataset):
+    def train(self, dataset, results_file_name):
         target_feature_name = dataset.target_feature_name
-        training_results = []
         for data_dict in dataset.iter_sub_datasets():
-            training_results.append({
+            results_path = data_dict['data_dir'] / results_file_name
+            if results_path.exists():
+                print(f'{results_path} already exists, exiting...')
+
+            results_data = {
                 'data_source': data_dict['data_source'].name,
                 'data_dir': data_dict['data_dir'].name,
                 'results': self._run_train(data_dict, target_feature_name)
-            })
+            }
+            write_json(results_data, results_path)
 
-        return training_results
+    def _run_train(self, data_dict, target_feature_name):
+        all_features = data_dict['features']
+        blocks_df = data_dict['blocks_df']
+        node_data = pd.concat([blocks_df, all_features], axis=1)
+
+        gnx = build_gnx_network(data_dict['relations_df'])
+
+        skf = StratifiedKFold(n_splits=self.k_folds, random_state=12321, shuffle=True)
+        classifier_results = []
+        k_fold_samples = []
+        output_results = {}
+        for train_index, test_index in skf.split(node_data, node_data[target_feature_name].values.ravel()):
+            train_data = node_data.iloc[train_index]
+            test_data = node_data.iloc[test_index]
+            _, _, _, _, history, _, out_result = self._train_model(
+                gnx, train_data, test_data, all_features
+            )
+            classifier_results.append(out_result['classifier'])
+            k_fold_samples.append({
+                'train_size': out_result['train_size'],
+                'test_size': out_result['train_size'],
+                'subject_groups_train': out_result['subject_groups_train'],
+                'subject_groups_test': out_result['subject_groups_test'],
+                # 'training_history': history
+            })
+            output_results = out_result
+
+        output_results['Kfold_results'] = classifier_results
+        output_results['Kfold_samples'] = k_fold_samples
+        output_results['classifier'] = average_classifiers(classifier_results)
+
+        return output_results
 
     def _train_model(self, gnx, train_data, test_data, all_features):
         subject_groups_train = Counter(train_data['subject'])
@@ -143,37 +180,3 @@ class GraphSageSIPLocalizer:
         print('fscore: {}'.format(f1))
 
         return generator, model, x_inp, x_out, history, target_encoding, output_results
-
-    def _run_train(self, data_dict, target_feature_name):
-        all_features = data_dict['features']
-        blocks_df = data_dict['blocks_df']
-        node_data = pd.concat([blocks_df, all_features], axis=1)
-
-        gnx = build_gnx_network(data_dict['relations_df'])
-
-        skf = StratifiedKFold(n_splits=self.k_folds, random_state=12321, shuffle=True)
-        classifier_results = []
-        k_fold_samples = []
-        output_results = {}
-        i = 1
-        for train_index, test_index in skf.split(node_data, node_data[target_feature_name].values.ravel()):
-            i += 1
-            train_data = node_data.iloc[train_index]
-            test_data = node_data.iloc[test_index]
-            generator, model, x_inp, x_out, history, target_encoding, out_result = self._train_model(
-                gnx, train_data, test_data, all_features
-            )
-            classifier_results.append(out_result['classifier'])
-            k_fold_samples.append({
-                'train_size': out_result['train_size'],
-                'test_size': out_result['train_size'],
-                'subject_groups_train': out_result['subject_groups_train'],
-                'subject_groups_test': out_result['subject_groups_test']
-            })
-            output_results = out_result
-
-        output_results['Kfold_results'] = classifier_results
-        output_results['Kfold_samples'] = k_fold_samples
-        output_results['classifier'] = average_classifiers(classifier_results)
-
-        return output_results
