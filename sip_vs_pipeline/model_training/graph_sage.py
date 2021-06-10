@@ -53,11 +53,12 @@ class GraphSageSIPLocalizer:
         return results_data
 
     def _run_train(self, data_dict, target_feature_name):
-        all_features = data_dict['features']
-        blocks_df = data_dict['blocks_df']
-        node_data = pd.concat([blocks_df, all_features], axis=1)
+        all_features = data_dict['features'].get()
+        blocks_df = data_dict['blocks_df'].get()
+        relations_df = data_dict['relations_df'].get()
 
-        gnx = build_gnx_network(data_dict['relations_df'])
+        node_data = pd.concat([blocks_df, all_features], axis=1)
+        gnx = build_gnx_network(relations_df)
 
         skf = StratifiedKFold(n_splits=self.k_folds, random_state=12321, shuffle=True)
         classifier_results = []

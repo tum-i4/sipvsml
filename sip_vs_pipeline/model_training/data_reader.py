@@ -9,6 +9,21 @@ def get_data_csv_files(labeled_bc_dir, csv_file_name):
             yield data_dir / csv_file_name
 
 
+class LazyVariable:
+    def __init__(self, get_fn) -> None:
+        super().__init__()
+        self._get_fn = get_fn
+        self._val = None
+
+    def get(self):
+        if self._val is None:
+            self._val = self._get_fn()
+        return self._val
+
+    def __repr__(self) -> str:
+        return f'LazyVariable {id(self)}'
+
+
 class SIPDataSet:
     def __init__(self, features_to_use, labeled_bc_dir, target_feature_name='subject') -> None:
         super().__init__()
@@ -21,14 +36,15 @@ class SIPDataSet:
             for data_dir in (self._labeled_bc_dir / sub_folder).iterdir():
                 block_csv_file_path = data_dir / 'blocks.csv.gz'
                 relations_file_path = data_dir / 'relations.csv.gz'
-                blocks_df = read_blocks_df(block_csv_file_path)[[self.target_feature_name]]
-                relations_df = read_relations_df(relations_file_path)
+                lazy_blocks_df = LazyVariable(lambda: read_blocks_df(block_csv_file_path)[[self.target_feature_name]])
+                lazy_relations_df = LazyVariable(lambda: read_relations_df(relations_file_path))
+                lazy_features_df = LazyVariable(lambda: self._read_features(data_dir, combine_features))
                 yield {
                     'data_source': sub_folder,
                     'data_dir': data_dir,
-                    'blocks_df': blocks_df,
-                    'relations_df': relations_df,
-                    'features': self._read_features(data_dir, combine_features)
+                    'blocks_df': lazy_blocks_df,
+                    'relations_df': lazy_relations_df,
+                    'features': lazy_features_df
                 }
 
     def _read_features(self, data_dir, combine_features):

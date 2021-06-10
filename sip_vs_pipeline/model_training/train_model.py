@@ -52,7 +52,8 @@ def run(labeled_bc_dir, model_name, features, results_file_name):
         'labeled_bc_dir': str(labeled_bc_dir),
         'model_name': model_name,
         'features': features,
-        'training_time_seconds': elapsed.total_seconds()
+        'training_time_seconds': elapsed.total_seconds(),
+        'results_file_name': results_file_name
     }, training_results_path)
 
 
