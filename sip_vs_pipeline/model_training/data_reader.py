@@ -24,28 +24,26 @@ class LazyVariable:
         return f'LazyVariable {id(self)}'
 
 
-class SIPDataSet:
-    def __init__(self, features_to_use, labeled_bc_dir, target_feature_name='subject') -> None:
+class SIPSingleObfuscationDataset:
+    def __init__(self, features_dir, features_to_use, target_feature_name='subject') -> None:
         super().__init__()
         self._features_to_use = features_to_use
-        self._labeled_bc_dir = labeled_bc_dir
+        self._data_dir = features_dir
         self.target_feature_name = target_feature_name
 
-    def iter_sub_datasets(self, combine_features=True):
-        for sub_folder in self._labeled_bc_dir.iterdir():
-            for data_dir in (self._labeled_bc_dir / sub_folder).iterdir():
-                block_csv_file_path = data_dir / 'blocks.csv.gz'
-                relations_file_path = data_dir / 'relations.csv.gz'
-                lazy_blocks_df = LazyVariable(lambda: read_blocks_df(block_csv_file_path)[[self.target_feature_name]])
-                lazy_relations_df = LazyVariable(lambda: read_relations_df(relations_file_path))
-                lazy_features_df = LazyVariable(lambda: self._read_features(data_dir, combine_features))
-                yield {
-                    'data_source': sub_folder,
-                    'data_dir': data_dir,
-                    'blocks_df': lazy_blocks_df,
-                    'relations_df': lazy_relations_df,
-                    'features': lazy_features_df
-                }
+    def get_data_dict(self, combine_features=True):
+        block_csv_file_path = self._data_dir / 'blocks.csv.gz'
+        relations_file_path = self._data_dir / 'relations.csv.gz'
+        lazy_blocks_df = LazyVariable(lambda: read_blocks_df(block_csv_file_path)[[self.target_feature_name]])
+        lazy_relations_df = LazyVariable(lambda: read_relations_df(relations_file_path))
+        lazy_features_df = LazyVariable(lambda: self._read_features(self._data_dir, combine_features))
+        return {
+            'data_source': self._data_dir,
+            'data_dir': self._data_dir,
+            'blocks_df': lazy_blocks_df,
+            'relations_df': lazy_relations_df,
+            'features': lazy_features_df
+        }
 
     def _read_features(self, data_dir, combine_features):
         res = {}
@@ -78,3 +76,17 @@ class SIPDataSet:
 
     def _combine_features(self, features_dict):
         return pd.concat(features_dict.values(), axis=1)
+
+
+class SIPDataSet:
+    def __init__(self, features_to_use, labeled_bc_dir, target_feature_name='subject') -> None:
+        super().__init__()
+        self._features_to_use = features_to_use
+        self._labeled_bc_dir = labeled_bc_dir
+        self.target_feature_name = target_feature_name
+
+    def iter_sub_datasets(self, combine_features=True):
+        for sub_folder in self._labeled_bc_dir.iterdir():
+            for data_dir in (self._labeled_bc_dir / sub_folder).iterdir():
+                dt = SIPSingleObfuscationDataset(self._features_to_use, data_dir, self.target_feature_name)
+                yield dt.get_data_dict(combine_features)

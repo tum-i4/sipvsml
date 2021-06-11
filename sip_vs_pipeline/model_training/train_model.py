@@ -2,14 +2,14 @@ import argparse
 import pathlib
 from datetime import datetime
 
-from sip_vs_pipeline.model_training.data_reader import SIPDataSet
+from sip_vs_pipeline.model_training.data_reader import SIPSingleObfuscationDataset
 from sip_vs_pipeline.model_training.graph_sage import GraphSageSIPLocalizer
 from sip_vs_pipeline.utils import write_json
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Train ML models for attacking SIP')
-    parser.add_argument('labeled_bc_dir', help='Directory where labeled binaries are stored')
+    parser = argparse.ArgumentParser(description='Train ML model for attacking SIP')
+    parser.add_argument('features_data_dir', help='Directory where feature files are stored')
     parser.add_argument(
         '--model', choices=['graph_sage'], help='Which model to use', default='graph_sage'
     )
@@ -31,25 +31,29 @@ def create_model(model_name):
     raise RuntimeError(f'Unknown model {model_name}')
 
 
-def run(labeled_bc_dir, model_name, features, results_file_name):
-    dataset = SIPDataSet(features, labeled_bc_dir)
+def run_train(data_dict, model_name, results_file_name, target_feature_name):
+    results_path = data_dict['data_dir'] / results_file_name
+    if results_path.exists():
+        print(f'{results_path} already exists, exiting...')
+    model = create_model(model_name)
+    results_data = model.train(data_dict, target_feature_name)
+    write_json(results_data, results_path)
+
+
+def run(features_data_dir, model_name, features, results_file_name):
+    dataset = SIPSingleObfuscationDataset(features_data_dir, features)
     start_time = datetime.now()
 
     target_feature_name = dataset.target_feature_name
-    for data_dict in dataset.iter_sub_datasets():
-        results_path = data_dict['data_dir'] / results_file_name
-        if results_path.exists():
-            print(f'{results_path} already exists, exiting...')
 
-        model = create_model(model_name)
-        results_data = model.train(data_dict, target_feature_name)
-        write_json(results_data, results_path)
+    run_train(dataset.get_data_dict(), model_name, results_file_name, target_feature_name)
 
     elapsed = datetime.now() - start_time
     training_results_path = f"training_run_{start_time.strftime('%Y-%M-%d_%H-%m-%S')}.json"
     write_json({
         'datetime': start_time.isoformat(),
-        'labeled_bc_dir': str(labeled_bc_dir),
+        'features_dir': str(features_data_dir),
+        'obfuscation': features_data_dir.name,
         'model_name': model_name,
         'features': features,
         'training_time_seconds': elapsed.total_seconds(),
@@ -59,11 +63,11 @@ def run(labeled_bc_dir, model_name, features, results_file_name):
 
 def main():
     args = parse_args()
-    labeled_bc_dir = pathlib.Path(args.labeled_bc_dir)
+    data_dir = pathlib.Path(args.features_data_dir)
     model_name = args.model
     features = args.use_features
     results_file_name = args.results_file_name
-    run(labeled_bc_dir, model_name, features, results_file_name)
+    run(data_dir, model_name, features, results_file_name)
 
 
 if __name__ == '__main__':
