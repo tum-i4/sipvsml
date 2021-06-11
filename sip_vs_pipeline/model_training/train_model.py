@@ -1,6 +1,5 @@
 import argparse
 import pathlib
-from datetime import datetime
 
 from sip_vs_pipeline.model_training.data_reader import SIPSingleObfuscationDataset
 from sip_vs_pipeline.model_training.graph_sage import GraphSageSIPLocalizer
@@ -42,23 +41,8 @@ def run_train(data_dict, model_name, results_file_name, target_feature_name):
 
 def run(features_data_dir, model_name, features, results_file_name):
     dataset = SIPSingleObfuscationDataset(features_data_dir, features)
-    start_time = datetime.now()
-
     target_feature_name = dataset.target_feature_name
-
     run_train(dataset.get_data_dict(), model_name, results_file_name, target_feature_name)
-
-    elapsed = datetime.now() - start_time
-    training_results_path = f"training_run_{start_time.strftime('%Y-%M-%d_%H-%m-%S')}.json"
-    write_json({
-        'datetime': start_time.isoformat(),
-        'features_dir': str(features_data_dir),
-        'obfuscation': features_data_dir.name,
-        'model_name': model_name,
-        'features': features,
-        'training_time_seconds': elapsed.total_seconds(),
-        'results_file_name': results_file_name
-    }, training_results_path)
 
 
 def main():
