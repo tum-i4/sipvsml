@@ -34,6 +34,7 @@ def run_train(data_dict, model_name, results_file_name, target_feature_name):
     results_path = data_dict['data_dir'] / results_file_name
     if results_path.exists():
         print(f'{results_path} already exists, exiting...')
+        return
     model = create_model(model_name)
     results_data = model.train(data_dict, target_feature_name)
     write_json(results_data, results_path)
