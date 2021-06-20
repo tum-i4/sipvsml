@@ -1,0 +1,12 @@
+opt-10 -load-pass-plugin=./libModuleLabelling.so -passes=module-labelling -disable-output ../anagram-BCF.bc
+
+opt-10 -load ./libModuleLabelling.so -bc-file-path="LABELED-BCs/simple-cov/BCF30/" -legacy-module-labelling -disable-output ../anagram-BCF.bc
+
+
+// USAGE:
+//    1. Legacy PM
+//      opt -load libHelloWorld.dylib -legacy-hello-world -disable-output `\`
+//        <input-llvm-file>
+//    2. New PM
+//      opt -load-pass-plugin=libHelloWorld.dylib -passes="hello-world" `\`
+//        -disable-output <input-llvm-file>
