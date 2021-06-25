@@ -56,8 +56,8 @@ def main():
     random.shuffle(keys)
     train, val, test = keys[:39], keys[39: 49], keys[49:]
     write_programs(bc_files, train, out_dir / 'train')
-    write_programs(bc_files, train, out_dir / 'val')
-    write_programs(bc_files, train, out_dir / 'test')
+    write_programs(bc_files, val, out_dir / 'val')
+    write_programs(bc_files, test, out_dir / 'test')
 
 
 if __name__ == '__main__':
