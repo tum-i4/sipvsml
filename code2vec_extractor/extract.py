@@ -2,7 +2,6 @@ import argparse
 import itertools
 import pathlib
 import subprocess
-from collections import defaultdict
 from dataclasses import dataclass
 from typing import List
 
@@ -81,9 +80,8 @@ class AstTree:
 
 
 class BasicBlock:
-    def __init__(self, uid, sip_label, ast_node) -> None:
+    def __init__(self, sip_label, ast_node) -> None:
         super().__init__()
-        self.uid = uid
         self.label = sip_label
         self.ast_node = ast_node
 
@@ -159,14 +157,52 @@ def get_ast(ll_file_path):
 
 
 def get_block_labels(ll_file_path):
-    # TODO
-    return defaultdict(lambda: 'none')
+    cmd = [
+        'opt-10',
+        '-load',
+        './llvm_labelling_pass/build/libModuleLabelling.so',
+        '-legacy-module-labelling',
+        '-disable-output',
+        str(ll_file_path)
+    ]
+    cwd = str(str(pathlib.Path(__file__).parent.absolute()))
+    labels = subprocess.check_output(cmd, cwd=cwd, stderr=subprocess.STDOUT)
+
+    res = []
+    for line in labels.decode().splitlines(keepends=False):
+        if line.strip() == '':
+            continue
+        *_, label = line.split('\t')
+        res.append(label)
+    return res
+
+# def get_blocks_dict(labels):
+#     res = {}
+#     for line in labels.decode().splitlines(keepends=False):
+#         if line.strip() == '':
+#             continue
+#         function, block, label = line.split('\t')
+#         res[f'{function}_{block}'] = label
+#     return res
 
 
-def get_basic_blocks(root, block_labels):
-    for basic_block_node in root.get_basic_blocks():
-        uid = " LABELED-BCs/simple-cov/BCF30/anagram-BCF.bccheck_anagram%originalBB28alteredBB "
-        yield BasicBlock(uid, block_labels[uid], basic_block_node)
+# def get_block_function_name(basic_block_node):
+#     func_def_node = basic_block_node.parent.parent
+#     func_header = func_def_node.children[0]
+#     assert func_header.node_type == 'FuncHeader'
+#     return func_header.children[1].txt.strip('@')
+#
+#
+# def get_block_ir_label(ast, bb_node):
+#     return ''
+
+
+def get_basic_blocks(ast, block_labels):
+    for sip_label, basic_block_node in zip(block_labels, ast.get_basic_blocks()):
+        # function_name = get_block_function_name(basic_block_node)
+        # block_label = get_block_ir_label(ast, basic_block_node)
+        # uid = block_labels[f'{function_name}_{block_label}']
+        yield BasicBlock(sip_label, basic_block_node)
 
 
 def hash_code(text):
@@ -177,9 +213,14 @@ def hash_code(text):
     return h
 
 
+def get_path_code2vec_rep(path_str):
+    return '<path_triplet>'
+
+
 def print_training_data(basic_block, paths):
     paths = list(paths)
     label = basic_block.label
+
     path_strings = []
     for (up, i1), parent, (down, i2) in paths:
         up_str = [x.node_type for x in up]
@@ -193,7 +234,7 @@ def print_training_data(basic_block, paths):
         path_str = path_up + '^' + f'({parent.node_type})' + '_' + path_down
         path_strings.append(path_str)
 
-    print(path_strings)
+    print(label, ' '.join(map(lambda x: get_path_code2vec_rep(x), path_strings)))
 
 
 def extract_from_ll_file(ll_file_path, max_path_length, max_path_width):
