@@ -5,7 +5,7 @@ import subprocess
 from dataclasses import dataclass
 from typing import List
 
-from tqdm import tqdm
+import numpy as np
 
 
 @dataclass
@@ -16,6 +16,11 @@ class Node:
     txt: str
     children: List
     parent = None
+
+    def get_child_id(self):
+        if self.parent is None:
+            return ''
+        return str(self.parent.children.index(self))
 
 
 class AstTree:
@@ -41,7 +46,7 @@ class AstTree:
             path2 = paths_dict[i2]
             up, parent, down = self._get_full_path(path1, path2)
             if len(up) + 1 + len(down) < max_path_length:
-                yield (up, i1), parent, (down, i2)
+                yield up, parent, down
 
     @staticmethod
     def _get_full_path(path1, path2):
@@ -207,14 +212,17 @@ def get_basic_blocks(ast, block_labels):
 
 def hash_code(text):
     # default java string hash code implementation
-    h = 0
+    h = np.int64(0)
     for b in text.encode():
         h = 31 * h + (b & 255)
     return h
 
 
-def get_path_code2vec_rep(path_str):
-    return '<path_triplet>'
+def path_node_2_str(node):
+    # not sure why, but JavaExtractor does this
+    if len(node.children) == 0:
+        return f'({node.node_type}{node.get_child_id()})'
+    return f'({node.node_type})'
 
 
 def print_training_data(basic_block, paths):
@@ -222,19 +230,14 @@ def print_training_data(basic_block, paths):
     label = basic_block.label
 
     path_strings = []
-    for (up, i1), parent, (down, i2) in paths:
-        up_str = [x.node_type for x in up]
-        up_str[0] = f'{up_str[0]}{i1}'
+    for up, parent, down in paths:
+        left = up[0].txt
+        right = down[-1].txt
 
-        down_str = [x.node_type for x in down]
-        down_str[-1] = f'{down_str[-1]}{i2}'
+        path_str = '^'.join(map(path_node_2_str, up)) + '_' + '_'.join(map(path_node_2_str, down))
+        path_strings.append(','.join([left, str(hash_code(path_str)), right]))
 
-        path_up = '^'.join(map(lambda x: f'({x})', up_str))
-        path_down = '_'.join(map(lambda x: f'({x})', down_str))
-        path_str = path_up + '^' + f'({parent.node_type})' + '_' + path_down
-        path_strings.append(path_str)
-
-    print(label, ' '.join(map(lambda x: get_path_code2vec_rep(x), path_strings)))
+    print(label, ' '.join(path_strings))
 
 
 def extract_from_ll_file(ll_file_path, max_path_length, max_path_width):
@@ -253,7 +256,7 @@ def read_file(ll_file_path):
 
 
 def extract_from_all_files(all_ll_files, max_path_length, max_path_width):
-    for ll_file_path in tqdm(list(all_ll_files)):
+    for ll_file_path in all_ll_files:
         extract_from_ll_file(ll_file_path, max_path_length, max_path_width)
 
 
