@@ -169,6 +169,14 @@ def get_basic_blocks(root, block_labels):
         yield BasicBlock(uid, block_labels[uid], basic_block_node)
 
 
+def hash_code(text):
+    # default java string hash code implementation
+    h = 0
+    for b in text.encode():
+        h = 31 * h + (b & 255)
+    return h
+
+
 def print_training_data(basic_block, paths):
     paths = list(paths)
     label = basic_block.label
