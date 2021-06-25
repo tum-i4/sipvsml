@@ -17,8 +17,6 @@
 
 using namespace llvm;
 
-static cl::opt<std::string> BCFilePath("bc-file-path", cl::desc("Specify input bc file path "), cl::value_desc("LABELED-BCs/simple-cov/BCF30/"));
-
 // No need to expose the internals of the pass to the outside world - keep
 // everything in an anonymous namespace.
 namespace {
@@ -38,23 +36,13 @@ namespace {
         }
     }
 
-    std::string getFileName(std::string path) {
-        const size_t pos = path.find_last_of('/');
-        if (pos != std::string::npos) {
-            return path.substr(pos + 1, path.size());
-        }
-        return path;
-    }
-
     std::string getUniqueBlockName(const BasicBlock &BB, const Function &F) {
         // need this to keep legacy block identifier
-        std::string Str = BCFilePath + getFileName(F.getParent()->getModuleIdentifier());
-        Str += F.getName();
         std::string BBStr;
         llvm::raw_string_ostream OS(BBStr);
         BB.printAsOperand(OS, false);
         BBStr = OS.str();
-        return Str + BBStr;
+        return F.getName().str() + "\t" + BBStr;
     }
 
     std::size_t getUniqueBlockUID(const BasicBlock &BB, const Function &F) {
@@ -76,15 +64,9 @@ namespace {
 
     // This method implements what the pass does
     void visitor(Module &M) {
-        errs() << "Module  --  identifier: " << M.getModuleIdentifier() << ", name: " << M.getName()  << "\n";
         for (Function &F: M) {
-            errs() << "Function  --  name: " << F.getName() << ", num_parameters: " << F.arg_size() << "\n";
-            size_t count=0;
             for (BasicBlock& bb : F){
-                errs() << "Basic Block -- name: " << bb.getName() << ", size: " << bb.size() << ", uid: "
-                << getUniqueBlockName(bb, F) << ", hash: " << getUniqueBlockUID(bb, F) << ", label: "
-                << getBlockLabel(bb) << "\n";
-                count += bb.size();
+                errs() << getUniqueBlockName(bb, F) << "\t" << getBlockLabel(bb) << "\n";
             }
         }
     }
