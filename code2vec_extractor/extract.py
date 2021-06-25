@@ -93,8 +93,8 @@ class BasicBlock:
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-maxlen', '--max_path_length', dest='max_path_length', required=False, default=8)
-    parser.add_argument('-maxwidth', '--max_path_width', dest='max_path_width', required=False, default=2)
+    parser.add_argument('-maxlen', '--max_path_length', dest='max_path_length', required=False, default=8, type=int)
+    parser.add_argument('-maxwidth', '--max_path_width', dest='max_path_width', required=False, default=2, type=int)
     parser.add_argument('-file', '--file', dest='file', required=False)
     parser.add_argument('-dir', '--dir', dest='dir', required=False)
     args = parser.parse_args()
@@ -155,7 +155,7 @@ def get_raw_text(file_content, node):
 
 def get_ast(ll_file_path):
     cmd = ['go', 'run', 'main/main.go', '-ll-file-path', str(ll_file_path)]
-    ast_text = subprocess.check_output(cmd, cwd='llvm_ir_parser')
+    ast_text = subprocess.check_output(cmd, cwd=str(pathlib.Path(__file__).parent / 'llvm_ir_parser'))
     root = parse_ast_text(ast_text)
     file_content = read_file(ll_file_path)
     return AstTree(root, file_content)
