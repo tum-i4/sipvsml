@@ -12,6 +12,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('labeled_bc_dir', help='Directory where labelled llvm .bc files are stored')
     parser.add_argument('output_dir', help='Output directory for train, val, test directories')
+    parser.add_argument('--small_subset', type=bool, default=False, help='Take small subset of the data')
     return parser.parse_args()
 
 
@@ -48,13 +49,18 @@ def write_programs(bc_files, data_keys, data_dir):
 def main():
     args = parse_args()
     labeled_bc_dir = pathlib.Path(args.labeled_bc_dir)
+    small_subset = args.small_subset
+
     bc_files = read_bc_files(labeled_bc_dir)
     out_dir = pathlib.Path(args.output_dir)
 
     random.seed(42)
     keys = list(bc_files.keys())
     random.shuffle(keys)
-    train, val, test = keys[:39], keys[39: 49], keys[49:]
+    if small_subset:
+        train, val, test = keys[:39], keys[39: 49], keys[49:]
+    else:
+        train, val, test = keys[:4], keys[4: 6], keys[6: 8]
     write_programs(bc_files, train, out_dir / 'train')
     write_programs(bc_files, val, out_dir / 'val')
     write_programs(bc_files, test, out_dir / 'test')
