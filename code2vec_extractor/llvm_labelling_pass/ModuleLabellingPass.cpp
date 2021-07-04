@@ -17,6 +17,8 @@
 
 using namespace llvm;
 
+static cl::opt<std::string> BCFilePath("bc-file-path", cl::desc("Specify input bc file path "), cl::value_desc("LABELED-BCs/simple-cov/BCF30/"));
+
 // No need to expose the internals of the pass to the outside world - keep
 // everything in an anonymous namespace.
 namespace {
@@ -36,13 +38,23 @@ namespace {
         }
     }
 
+    std::string getFileName(std::string path) {
+        const size_t pos = path.find_last_of('/');
+        if (pos != std::string::npos) {
+            return path.substr(pos + 1, path.size());
+        }
+        return path;
+    }
+
     std::string getUniqueBlockName(const BasicBlock &BB, const Function &F) {
         // need this to keep legacy block identifier
+        std::string Str = BCFilePath + getFileName(F.getParent()->getModuleIdentifier());
+        Str += F.getName();
         std::string BBStr;
         llvm::raw_string_ostream OS(BBStr);
         BB.printAsOperand(OS, false);
         BBStr = OS.str();
-        return F.getName().str() + "\t" + BBStr;
+        return Str + BBStr;
     }
 
     std::size_t getUniqueBlockUID(const BasicBlock &BB, const Function &F) {
@@ -50,7 +62,7 @@ namespace {
         auto hashed = hasher(getUniqueBlockName(BB, F));
         return hashed;
     }
-    
+
     std::string getBlockLabel(const BasicBlock &BB) {
         std::string label = "none";
         for (const Instruction &I: BB) {
@@ -66,7 +78,7 @@ namespace {
     void visitor(Module &M) {
         for (Function &F: M) {
             for (BasicBlock& bb : F){
-                errs() << getUniqueBlockName(bb, F) << "\t" << getBlockLabel(bb) << "\n";
+                errs() << getUniqueBlockName(bb, F) << "\t" << getUniqueBlockUID(bb, F) << "\t" << getBlockLabel(bb) << "\n";
             }
         }
     }
