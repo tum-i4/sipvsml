@@ -1,6 +1,4 @@
 # File taken from https://github.com/mr-ma/composition-sip-eval/blob/smwyg/generate-ml-files.sh
-# Modified generate the same obfuscations for simple dataset as well
-
 
 FLA='FLAs'
 SUB='SUB'
@@ -63,11 +61,11 @@ function verifyCountFiles {
 	done
 }
 
-function generateDataset {
-	DATASET=$1
+function generateMibench {
+	DATASET='mibench-cov'
 	generate "NONE"
 	edit 30
-	generate "$BCF" "$FLA-$BCF" "$BCF-$FLA" "$SUB-$BCF" "$BCF-$SUB" "$FLA-$BCF-$SUB" "$FLA-$SUB-$BCF" "$BCF-$FLA-$SUB" "$BCF-$SUB-$FLA" "$SUB-$FLA-$BCF" "$SUB-$BCF-$FLA" "$SUB" "$FLA" "$SUB-$FLA" "$FLA-$SUB" "$BCF-$FLA"2 "$BCF-$FLA"2"-$SUB"2 "$BCF-$SUB"2"-$FLA"2
+	generate "$BCF" "$FLA-$BCF" "$BCF-$FLA" "$SUB-$BCF" "$BCF-$SUB" "$FLA-$BCF-$SUB" "$FLA-$SUB-$BCF" "$BCF-$FLA-$SUB" "$BCF-$SUB-$FLA" "$SUB-$FLA-$BCF" "$SUB-$BCF-$FLA" "$SUB" "$FLA" "$SUB-$FLA" "$FLA-$SUB" "$BCF-$FLA"2 "$BCF-$FLA"2"-$SUB"2 "$BCF-$SUB"2"-$FLA"2 
 
 	verifyCountFiles "$GENERATIONPATH/$DATASET/*" "76"
 
@@ -82,19 +80,15 @@ function generateDataset {
 
 }
 
-generateDataset mibench-cov
-generateDataset simple-cov
-
-function checkoutput {
-        if [ $? -ne 0 ]; then
-                echo $1
-                exit 1
-        fi
+function generateSimple {
+	DATASET='simple-cov'
+	edit 30
+	generate "NONE"
+	generate "$BCF" "$FLA-$BCF" "$BCF-$FLA" "$SUB-$BCF" "$BCF-$SUB" "$FLA-$BCF-$SUB" "$FLA-$SUB-$BCF" "$BCF-$FLA-$SUB" "$BCF-$SUB-$FLA" "$SUB-$FLA-$BCF" "$SUB-$BCF-$FLA" "$SUB" "$FLA" "$SUB-$FLA" "$FLA-$SUB"
+	verifyCountFiles "$GENERATIONPATH/$DATASET/*" "160"
 }
-for ds in 'simple-cov' 'mibench-cov'; do
-        waitforjobs $(nproc)
-        echo SPAWNING $(nproc) processes to generate CSV files from labled BC samples
-        bash ../program-dependence-graph/collect-seg-dataset-features.sh LABELED-BCs/$ds skip > /dev/null &
-done
-waitforjobs 1
-checkoutput 'Failed to generate CSV files'
+
+
+
+generateSimple
+generateMibench
