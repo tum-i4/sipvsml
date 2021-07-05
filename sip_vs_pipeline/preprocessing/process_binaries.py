@@ -22,10 +22,6 @@ def parse_args():
         '--input_format', choices=['.csv', '.feather'], default='.csv',
         help='Format for reading blocks and relations files'
     )
-    parser.add_argument(
-        '--output_format', choices=['.csv', '.feather', '.csv.zip'], default='.csv.zip',
-        help='Format for writing blocks and relations files'
-    )
     args = parser.parse_args()
     return args
 
