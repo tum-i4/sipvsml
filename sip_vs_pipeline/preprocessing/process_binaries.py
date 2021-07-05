@@ -13,44 +13,37 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Preprocess protected binary programs')
     parser.add_argument('labeled_bc_dir', help='Directory where labeled binaries are stored')
     parser.add_argument(
-        '--preprocessor', choices=[
-            'compress_csv', 'general_ir', 'disassemble_bc', 'remove_raw_bc', 'remove_csv_files', 'all'
-        ], default='all', nargs='+', help='Which preprocessor to run'
-    )
-    parser.add_argument(
-        '--input_format', choices=['.csv', '.feather'], default='.csv',
-        help='Format for reading blocks and relations files'
+        '--preprocessors', choices=[
+            'compress_csv', 'general_ir', 'disassemble_bc', 'remove_raw_bc', 'remove_csv_files',
+        ], nargs='+', help='Which preprocessors to run'
     )
     args = parser.parse_args()
     return args
 
 
-def create_preprocessor(preprocessor):
-    if preprocessor == 'all':
-        return ComposePP(
-            DisassembleBC(),
-            CompressToZip(),
-            Ir2VecInstructionGen(),
-            RemoveRawBinaries(),
-            RemoveCsvFiles(),
-        )
-    if preprocessor == 'compress_csv':
-        return CompressToZip()
-    if preprocessor == 'remove_raw_bc':
-        return RemoveRawBinaries()
-    if preprocessor == 'remove_csv_files':
-        return RemoveCsvFiles()
-    if preprocessor == 'general_ir':
-        return Ir2VecInstructionGen()
-    if preprocessor == 'disassemble_bc':
-        return DisassembleBC()
+def create_preprocessor(preprocessors):
+    pps = []
+    for pp in preprocessors:
+        if pp == 'compress_csv':
+            pps.append(CompressToZip())
+        elif pp == 'remove_raw_bc':
+            pps.append(RemoveRawBinaries())
+        elif pp == 'remove_csv_files':
+            pps.append(RemoveCsvFiles())
+        elif pp == 'general_ir':
+            pps.append(Ir2VecInstructionGen())
+        elif pp == 'disassemble_bc':
+            pps.append(DisassembleBC())
+        else:
+            raise RuntimeError(f'Unknown pp {pp}')
+    return ComposePP(*pps)
 
 
 def main():
     args = parse_args()
     labeled_bc_dir = pathlib.Path(args.labeled_bc_dir)
 
-    preprocessor = create_preprocessor(args.preprocessor)
+    preprocessor = create_preprocessor(args.preprocessors)
     bc_dirs = list(get_protected_bc_dirs(labeled_bc_dir))
     with ProcessPoolExecutor() as process_pool:
         list(tqdm(
