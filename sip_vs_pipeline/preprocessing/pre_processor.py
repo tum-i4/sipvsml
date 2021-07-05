@@ -1,3 +1,5 @@
+import subprocess
+
 from sip_vs_pipeline.preprocessing.ir_line_parser import generalize_ir_line
 from sip_vs_pipeline.utils import read_blocks_df, write_blocks_df, write_relations_df, read_relations_df
 
@@ -78,3 +80,14 @@ class RemoveCsvFiles(PreProcessor):
         for file in protected_bc_dir.iterdir():
             if file.suffix == '.csv':
                 file.unlink()
+
+
+class DisassembleBC(PreProcessor):
+    def __init__(self, llvm_dis_version='10') -> None:
+        super().__init__()
+        self.llvm_dis_version = llvm_dis_version
+
+    def run(self, protected_bc_dir):
+        for file in protected_bc_dir.iterdir():
+            if file.suffix == '.bc':
+                subprocess.check_call([f'llvm-dis-{self.llvm_dis_version}', str(file)])

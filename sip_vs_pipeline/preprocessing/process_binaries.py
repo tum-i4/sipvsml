@@ -5,7 +5,7 @@ from concurrent.futures import ProcessPoolExecutor
 from tqdm import tqdm
 
 from sip_vs_pipeline.preprocessing.pre_processor import ComposePP, Ir2VecInstructionGen, \
-    CompressToZip, RemoveCsvFiles, RemoveRawBinaries
+    CompressToZip, RemoveCsvFiles, RemoveRawBinaries, DisassembleBC
 from sip_vs_pipeline.utils import get_protected_bc_dirs
 
 
@@ -14,9 +14,8 @@ def parse_args():
     parser.add_argument('labeled_bc_dir', help='Directory where labeled binaries are stored')
     parser.add_argument(
         '--preprocessor', choices=[
-            'compress_csv', 'general_ir' 'remove_raw_bc', 'remove_csv_files', 'all'
-        ], default='all',
-        help='Which preprocessor to run'
+            'compress_csv', 'general_ir', 'disassemble_bc', 'remove_raw_bc', 'remove_csv_files', 'all'
+        ], default='all', nargs='+', help='Which preprocessor to run'
     )
     parser.add_argument(
         '--input_format', choices=['.csv', '.feather'], default='.csv',
@@ -29,10 +28,11 @@ def parse_args():
 def create_preprocessor(preprocessor):
     if preprocessor == 'all':
         return ComposePP(
+            DisassembleBC(),
             CompressToZip(),
             Ir2VecInstructionGen(),
             RemoveRawBinaries(),
-            RemoveCsvFiles()
+            RemoveCsvFiles(),
         )
     if preprocessor == 'compress_csv':
         return CompressToZip()
@@ -42,6 +42,8 @@ def create_preprocessor(preprocessor):
         return RemoveCsvFiles()
     if preprocessor == 'general_ir':
         return Ir2VecInstructionGen()
+    if preprocessor == 'disassemble_bc':
+        return DisassembleBC()
 
 
 def main():
