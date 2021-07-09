@@ -46,7 +46,7 @@ def run_data_generation_script(out_dir):
                  f'--security-opt seccomp=unconfined {IMAGE_NAME}'
     data_script = 'mkdir -p /home/sip/paperback/LABELED-BCs && ' \
                   'ln -s /home/sip/paperback/LABELED-BCs /home/sip/eval/LABELED-BCs && ' \
-                  'bash generate-protected-binaries.sh'
+                  'bash generate-ml-files.sh'
     subprocess.run(f'{docker_run} bash -c "{data_script}"', shell=True, check=True)
     print('Running data generation in docker container...DONE')
 
