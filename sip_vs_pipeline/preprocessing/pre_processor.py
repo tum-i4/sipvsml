@@ -195,6 +195,7 @@ class PDGPreProcessor(PreProcessor):
         self.build_docker_image()
         self._compress_csv_files = CompressToZip()
         self._remove_csv_files = RemoveCsvFiles()
+        self._pdg_script_path = pathlib.Path(__file__).absolute().parent / 'extract_pdg_files.sh'
 
     def build_docker_image(self):
         subprocess.run(['docker', 'build', '-t', self.docker_image_name, self.git_repo_url], check=True)
@@ -202,10 +203,11 @@ class PDGPreProcessor(PreProcessor):
     def run(self, protected_bc_dir):
         docker_run = f'docker run --rm ' \
                      f'-v "{protected_bc_dir}":/home/sip/paperback:rw ' \
+                     f'-v "{self._pdg_script_path}":/home/sip/eval/{self._pdg_script_path.name} ' \
                      f'--security-opt seccomp=unconfined {self.docker_image_name}'
         data_script = 'mkdir -p /home/sip/paperback/LABELED-BCs && ' \
                       'ln -s /home/sip/paperback/LABELED-BCs /home/sip/eval/LABELED-BCs && ' \
-                      'bash generate-protected-binaries.sh'
+                      f'bash {self._pdg_script_path.name}'
         subprocess.run(f'{docker_run} bash -c "{data_script}"', shell=True, check=True)
         self._compress_csv_files.run(protected_bc_dir)
         self._remove_csv_files.run(protected_bc_dir)

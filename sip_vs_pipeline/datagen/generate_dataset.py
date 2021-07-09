@@ -43,7 +43,6 @@ def run_data_generation_script(out_dir):
     print('Running data generation in docker container...')
     docker_run = f'docker run --rm ' \
                  f'-v "{out_dir}":/home/sip/paperback:rw ' \
-                 f'-v "{GEN_PROTECTED_BINARIES_SH_PATH}":/home/sip/eval/generate-protected-binaries.sh ' \
                  f'--security-opt seccomp=unconfined {IMAGE_NAME}'
     data_script = 'mkdir -p /home/sip/paperback/LABELED-BCs && ' \
                   'ln -s /home/sip/paperback/LABELED-BCs /home/sip/eval/LABELED-BCs && ' \
