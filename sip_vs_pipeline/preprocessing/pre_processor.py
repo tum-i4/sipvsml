@@ -117,32 +117,33 @@ class Code2VecPreProcessor(PreProcessor):
         c2v_paths = [self._extract_ast_paths(bc_path) for bc_path in bc_paths]
         programs_dict = self._get_programs_dict(c2v_paths)
 
-        code2vec_dir = (protected_bc_dir / 'code2vec')
-        if code2vec_dir.exists():
-            shutil.rmtree(code2vec_dir)
+        folds_dir = (protected_bc_dir / 'folds')
+        if folds_dir.exists():
+            shutil.rmtree(folds_dir)
 
-        fold_dirs = self._create_fold_dirs(code2vec_dir, programs_dict)
+        fold_dirs = self._create_fold_dirs(folds_dir, programs_dict)
         for fold_dir in fold_dirs:
             self._preprocess_fold_dir(fold_dir)
 
-    def _create_fold_dirs(self, code2vec_dir, programs_dict):
+    def _create_fold_dirs(self, folds_dir, programs_dict):
         program_names = list(programs_dict.keys())
         train_split_index = int(len(program_names) * self.train_fraction)
         fold_dirs = []
+        random.seed(42)
         for k in range(self.k_folds):
             random.shuffle(program_names)
             train_keys, val_keys = program_names[:train_split_index], program_names[train_split_index:]
-            fold_dir = code2vec_dir / f'k_fold_{k}'
-            train_dir, val_dir = fold_dir / 'train', fold_dir / 'val'
+            k_fold_dir = folds_dir / f'k_fold_{k}'
+            train_dir, val_dir = k_fold_dir / 'train', k_fold_dir / 'val'
             os.makedirs(train_dir, exist_ok=True)
             os.makedirs(val_dir, exist_ok=True)
-            self._move_files(programs_dict, train_dir, train_keys)
-            self._move_files(programs_dict, val_dir, val_keys)
-            fold_dirs.append(fold_dir)
+            self._copy_files(programs_dict, train_dir, train_keys)
+            self._copy_files(programs_dict, val_dir, val_keys)
+            fold_dirs.append(k_fold_dir)
         return fold_dirs
 
     @staticmethod
-    def _move_files(programs_dict, dest_dir, keys):
+    def _copy_files(programs_dict, dest_dir, keys):
         for key in keys:
             for bc_path in programs_dict[key]:
                 copy_file(bc_path, dest_dir / bc_path.name)
@@ -154,37 +155,19 @@ class Code2VecPreProcessor(PreProcessor):
             programs_dict[file.name.split('-')[0].split('.')[0]].append(file)
         return programs_dict
 
-    def _generate_c2v_file(self, bc_path):
-        self._disassemble(bc_path)
-        raw_c2v_path = self._extract_ast_paths(bc_path)
-        out_path = self._preprocess_c2v_ast_paths(bc_path, raw_c2v_path)
-        return out_path
-
-    def _preprocess_c2v_ast_paths(self, bc_path, raw_c2v_path):
-        out_path = bc_path.parent / f'{bc_path.name.split(".")[0]}.preprocessed.c2v'
-        cmd = [
-            'python', str(self.code2vec_repo_path / 'LLIRExtractor' / 'preprocess_sip_vs_ml.py'),
-            '--file_path', str(raw_c2v_path),
-            # '--train_data', str(CODE2VEC_DATA_PATH / 'code2vec_llir.train.raw.txt'),
-            # '--test_data', str(CODE2VEC_DATA_PATH / 'code2vec_llir.test.raw.txt'),
-            # '--val_data', str(CODE2VEC_DATA_PATH / 'code2vec_llir.val.raw.txt'),
-            # '--max_contexts', '200',
-            # '--word_vocab_size', '1301136',
-            # '--path_vocab_size', '911417',
-            # '--target_vocab_size', '261245',
-
-            # '--word_histogram', str(CODE2VEC_DATA_PATH / 'code2vec_llir.histo.ori.c2v'),
-            # '--path_histogram', str(CODE2VEC_DATA_PATH / 'code2vec_llir.histo.path.c2v'),
-            # '--target_histogram', str(CODE2VEC_DATA_PATH / 'code2vec_llir.histo.tgt.c2v')
-        ]
-        subprocess.check_call(cmd, cwd=str(raw_c2v_path.parent))
-        return out_path
-
     def _extract_ast_paths(self, bc_path):
         raw_c2v_path = bc_path.with_suffix('.raw_c2v')
+
+        if raw_c2v_path.exists():
+            return raw_c2v_path
+
+        ll_path = bc_path.with_suffix('.ll')
+        if not ll_path.exists():
+            self._disassemble(bc_path)
+
         cmd = [
-            'python', str(self.code2vec_repo_path / 'LLIRExtractor' / 'extractor.py'),
-            '--file', str(bc_path.with_suffix('.ll'))
+            'python', str(self.code2vec_repo_path / 'LLIRExtractor' / 'extract.py'),
+            '--file', str(ll_path)
         ]
         c2v_text = subprocess.check_output(cmd)
         with open(raw_c2v_path, 'wb') as out:
