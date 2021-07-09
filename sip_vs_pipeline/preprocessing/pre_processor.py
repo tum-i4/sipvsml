@@ -106,7 +106,7 @@ def copy_file(src_path, dest_path):
 
 
 class Code2VecPreProcessor(PreProcessor):
-    def __init__(self, code2vec_repo_path, k_folds=11, train_fraction_size=0.8) -> None:
+    def __init__(self, code2vec_repo_path=CODE2VEC_REPOSITORY_PATH, k_folds=11, train_fraction_size=0.8) -> None:
         super().__init__()
         self.code2vec_repo_path = code2vec_repo_path
         self.k_folds = k_folds
