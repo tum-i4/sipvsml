@@ -21,7 +21,7 @@ def parse_args():
     return args
 
 
-def create_preprocessor(preprocessors):
+def create_preprocessor(preprocessors, labeled_bc_dir):
     pps = []
     for pp in preprocessors:
         if pp == 'compress_csv':
@@ -37,7 +37,7 @@ def create_preprocessor(preprocessors):
         elif pp == 'code2vec':
             pps.append(Code2VecPreProcessor())
         elif pp == 'pdg':
-            pps.append(PDGPreProcessor())
+            pps.append(PDGPreProcessor(labeled_bc_dir))
         else:
             raise RuntimeError(f'Unknown pp {pp}')
     return ComposePP(*pps)
@@ -47,7 +47,7 @@ def main():
     args = parse_args()
     labeled_bc_dir = pathlib.Path(args.labeled_bc_dir)
 
-    preprocessor = create_preprocessor(args.preprocessors)
+    preprocessor = create_preprocessor(args.preprocessors, labeled_bc_dir)
     bc_dirs = list(get_protected_bc_dirs(labeled_bc_dir))
     # for bc_dir in bc_dirs:
     #     preprocessor.run(bc_dir)

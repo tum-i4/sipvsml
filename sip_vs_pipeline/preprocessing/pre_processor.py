@@ -188,7 +188,8 @@ class Code2VecPreProcessor(PreProcessor):
 
 
 class PDGPreProcessor(PreProcessor):
-    def __init__(self, docker_image_name='smwyg', git_repo_url='https://github.com/mr-ma/smwyg-artifact.git') -> None:
+    def __init__(self, labeled_bc_dir, docker_image_name='smwyg',
+                 git_repo_url='https://github.com/mr-ma/smwyg-artifact.git') -> None:
         super().__init__()
         self.docker_image_name = docker_image_name
         self.git_repo_url = git_repo_url
@@ -196,13 +197,14 @@ class PDGPreProcessor(PreProcessor):
         self._compress_csv_files = CompressToZip()
         self._remove_csv_files = RemoveCsvFiles()
         self._pdg_script_path = pathlib.Path(__file__).absolute().parent / 'extract_pdg_files.sh'
+        self.labeled_bc_dir = labeled_bc_dir
 
     def build_docker_image(self):
         subprocess.run(['docker', 'build', '-t', self.docker_image_name, self.git_repo_url], check=True)
 
     def run(self, protected_bc_dir):
         docker_run = f'docker run --rm ' \
-                     f'-v "{protected_bc_dir}":/home/sip/paperback:rw ' \
+                     f'-v "{self.labeled_bc_dir}":/home/sip/paperback:rw ' \
                      f'-v "{self._pdg_script_path}":/home/sip/eval/{self._pdg_script_path.name} ' \
                      f'--security-opt seccomp=unconfined {self.docker_image_name}'
         data_script = 'mkdir -p /home/sip/paperback/LABELED-BCs && ' \
