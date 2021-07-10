@@ -8,7 +8,7 @@ from collections import defaultdict
 from sip_vs_pipeline.preprocessing.ir_line_parser import generalize_ir_line
 from sip_vs_pipeline.utils import read_blocks_df, write_blocks_df, write_relations_df, read_relations_df
 
-CODE2VEC_REPOSITORY_PATH = pathlib.Path('/home/nika/Desktop/Thesis/code2vec')
+CODE2VEC_REPOSITORY_PATH = pathlib.Path(os.getenv('CODE2VEC_REPOSITORY_PATH', '/home/nika/Desktop/Thesis/code2vec'))
 
 
 class PreProcessor:
