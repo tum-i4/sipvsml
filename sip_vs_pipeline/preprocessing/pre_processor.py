@@ -203,13 +203,24 @@ class PDGPreProcessor(PreProcessor):
         subprocess.run(['docker', 'build', '-t', self.docker_image_name, self.git_repo_url], check=True)
 
     def run(self, protected_bc_dir):
-        docker_run = f'docker run --rm ' \
-                     f'-v "{self.labeled_bc_dir}":/home/sip/paperback:rw ' \
-                     f'-v "{self._pdg_script_path}":/home/sip/eval/{self._pdg_script_path.name} ' \
+        docker_run = f'docker run --rm -v "{self.labeled_bc_dir.parent}":/home/sip/paperback:rw ' \
                      f'--security-opt seccomp=unconfined {self.docker_image_name}'
-        data_script = 'mkdir -p /home/sip/paperback/LABELED-BCs && ' \
-                      'ln -s /home/sip/paperback/LABELED-BCs /home/sip/eval/LABELED-BCs && ' \
-                      f'bash {self._pdg_script_path.name}'
-        subprocess.run(f'{docker_run} bash -c "{data_script}"', shell=True, check=True)
+
+        bc_files = [file for file in protected_bc_dir.iterdir() if file.suffix == '.bc']
+        for bc_file in bc_files:
+            container_labeled_bcs = '/'.join(bc_file.parts[bc_file.parts.index('LABELED-BCs'):])
+            opt_command = 'opt-7 -load /home/sip/program-dependence-graph/build/libpdg.so -reg2mem -pdg-csv -append ' \
+                          f'-relations "{container_labeled_bcs + "/relations.csv"}" ' \
+                          f'-blocks "{container_labeled_bcs + "/blocks.csv"}" ' + \
+                          container_labeled_bcs
+            data_script = ' && '.join([
+                'mkdir -p /home/sip/paperback/LABELED-BCs',
+                'ln -s /home/sip/paperback/LABELED-BCs /home/sip/eval/LABELED-BCs',
+                opt_command
+            ])
+            cmd = f'{docker_run} bash -c "{data_script}"'
+
+            subprocess.run(cmd, shell=True, check=True)
+
         self._compress_csv_files.run(protected_bc_dir)
         self._remove_csv_files.run(protected_bc_dir)
