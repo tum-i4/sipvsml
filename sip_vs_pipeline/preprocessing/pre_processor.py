@@ -1,7 +1,6 @@
 import os
 import pathlib
 import random
-import shutil
 import subprocess
 from collections import defaultdict
 
@@ -106,54 +105,14 @@ def copy_file(src_path, dest_path):
 
 
 class Code2VecPreProcessor(PreProcessor):
-    def __init__(self, code2vec_repo_path=CODE2VEC_REPOSITORY_PATH, k_folds=11, train_fraction_size=0.8) -> None:
+    def __init__(self, code2vec_repo_path=CODE2VEC_REPOSITORY_PATH) -> None:
         super().__init__()
         self.code2vec_repo_path = code2vec_repo_path
-        self.k_folds = k_folds
-        self.train_fraction = train_fraction_size
 
     def run(self, protected_bc_dir):
         bc_paths = [x for x in protected_bc_dir.iterdir() if x.suffix == '.bc']
-        c2v_paths = [self._extract_ast_paths(bc_path) for bc_path in bc_paths]
-        programs_dict = self._get_programs_dict(c2v_paths)
-
-        folds_dir = (protected_bc_dir / 'folds')
-        if folds_dir.exists():
-            shutil.rmtree(folds_dir)
-
-        fold_dirs = self._create_fold_dirs(folds_dir, programs_dict)
-        for fold_dir in fold_dirs:
-            self._preprocess_fold_dir(fold_dir)
-
-    def _create_fold_dirs(self, folds_dir, programs_dict):
-        program_names = list(programs_dict.keys())
-        train_split_index = int(len(program_names) * self.train_fraction)
-        fold_dirs = []
-        random.seed(42)
-        for k in range(self.k_folds):
-            random.shuffle(program_names)
-            train_keys, val_keys = program_names[:train_split_index], program_names[train_split_index:]
-            k_fold_dir = folds_dir / f'k_fold_{k}'
-            train_dir, val_dir = k_fold_dir / 'train', k_fold_dir / 'val'
-            os.makedirs(train_dir, exist_ok=True)
-            os.makedirs(val_dir, exist_ok=True)
-            self._copy_files(programs_dict, train_dir, train_keys)
-            self._copy_files(programs_dict, val_dir, val_keys)
-            fold_dirs.append(k_fold_dir)
-        return fold_dirs
-
-    @staticmethod
-    def _copy_files(programs_dict, dest_dir, keys):
-        for key in keys:
-            for bc_path in programs_dict[key]:
-                copy_file(bc_path, dest_dir / bc_path.name)
-
-    @staticmethod
-    def _get_programs_dict(file_paths):
-        programs_dict = defaultdict(list)
-        for file in file_paths:
-            programs_dict[file.name.split('-')[0].split('.')[0]].append(file)
-        return programs_dict
+        for bc_path in bc_paths:
+            self._extract_ast_paths(bc_path)
 
     def _extract_ast_paths(self, bc_path):
         raw_c2v_path = bc_path.with_suffix('.raw_c2v')
@@ -177,14 +136,6 @@ class Code2VecPreProcessor(PreProcessor):
     @staticmethod
     def _disassemble(bc_path):
         subprocess.check_call(['llvm-dis-10', str(bc_path)])
-
-    def _preprocess_fold_dir(self, fold_dir):
-        cmd = [
-            'bash',
-            str(self.code2vec_repo_path / 'preprocess_llir_sip_vs_ml.sh'),
-            str(fold_dir)
-        ]
-        subprocess.check_call(cmd, shell=True)
 
 
 class PDGPreProcessor(PreProcessor):
@@ -224,3 +175,45 @@ class PDGPreProcessor(PreProcessor):
 
         self._compress_csv_files.run(protected_bc_dir)
         self._remove_csv_files.run(protected_bc_dir)
+
+
+class KFoldSplit(PreProcessor):
+    def __init__(self, k_folds=11, train_fraction=0.8, seed=42) -> None:
+        super().__init__()
+        self.seed = seed
+        self.k_folds = k_folds
+        self.train_fraction = train_fraction
+
+    def run(self, protected_bc_dir):
+        programs_dict = self._get_programs_dict(protected_bc_dir)
+
+        folds_dir = (protected_bc_dir / 'folds')
+        random.seed(self.seed)
+        program_names = list(programs_dict.keys())
+        train_split_index = int(len(program_names) * self.train_fraction)
+        fold_dirs = []
+        random.seed(42)
+        for k in range(self.k_folds):
+            random.shuffle(program_names)
+            train_keys, val_keys = program_names[:train_split_index], program_names[train_split_index:]
+            k_fold_dir = folds_dir / f'k_fold_{k}'
+            train_dir, val_dir = k_fold_dir / 'train', k_fold_dir / 'val'
+            os.makedirs(train_dir, exist_ok=True)
+            os.makedirs(val_dir, exist_ok=True)
+            self._copy_files(programs_dict, train_dir, train_keys)
+            self._copy_files(programs_dict, val_dir, val_keys)
+            fold_dirs.append(k_fold_dir)
+        return fold_dirs
+
+    @staticmethod
+    def _copy_files(programs_dict, dest_dir, keys):
+        for key in keys:
+            for bc_path in programs_dict[key]:
+                copy_file(bc_path, dest_dir / bc_path.name)
+
+    @staticmethod
+    def _get_programs_dict(file_paths):
+        programs_dict = defaultdict(list)
+        for file in file_paths:
+            programs_dict[file.name.split('-')[0].split('.')[0]].append(file)
+        return programs_dict

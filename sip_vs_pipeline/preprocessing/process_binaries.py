@@ -5,7 +5,7 @@ from concurrent.futures import ProcessPoolExecutor
 from tqdm import tqdm
 
 from sip_vs_pipeline.preprocessing.pre_processor import ComposePP, Ir2VecInstructionGen, \
-    CompressToZip, RemoveCsvFiles, RemoveRawBinaries, DisassembleBC, Code2VecPreProcessor, PDGPreProcessor
+    CompressToZip, RemoveCsvFiles, RemoveRawBinaries, DisassembleBC, Code2VecPreProcessor, PDGPreProcessor, KFoldSplit
 from sip_vs_pipeline.utils import get_protected_bc_dirs
 
 
@@ -38,6 +38,8 @@ def create_preprocessor(preprocessors, labeled_bc_dir):
             pps.append(Code2VecPreProcessor())
         elif pp == 'pdg':
             pps.append(PDGPreProcessor(labeled_bc_dir))
+        elif pp == 'k_fold_split':
+            pps.append(KFoldSplit())
         else:
             raise RuntimeError(f'Unknown pp {pp}')
     return ComposePP(*pps)
