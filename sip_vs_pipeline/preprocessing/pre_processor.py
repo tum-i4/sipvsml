@@ -208,11 +208,11 @@ class PDGPreProcessor(PreProcessor):
 
         bc_files = [file for file in protected_bc_dir.iterdir() if file.suffix == '.bc']
         for bc_file in bc_files:
-            container_labeled_bcs = '/'.join(bc_file.parts[bc_file.parts.index('LABELED-BCs'):])
+            container_labeled_bcs = '/'.join(bc_file.parent.parts[bc_file.parts.index('LABELED-BCs'):])
             opt_command = 'opt-7 -load /home/sip/program-dependence-graph/build/libpdg.so -reg2mem -pdg-csv -append ' \
                           f'-relations "{container_labeled_bcs + "/relations.csv"}" ' \
                           f'-blocks "{container_labeled_bcs + "/blocks.csv"}" ' + \
-                          container_labeled_bcs
+                          container_labeled_bcs + f'/{bc_file.name} > /dev/null'
             data_script = ' && '.join([
                 'mkdir -p /home/sip/paperback/LABELED-BCs',
                 'ln -s /home/sip/paperback/LABELED-BCs /home/sip/eval/LABELED-BCs',
@@ -220,7 +220,7 @@ class PDGPreProcessor(PreProcessor):
             ])
             cmd = f'{docker_run} bash -c "{data_script}"'
 
-            subprocess.run(cmd, shell=True, check=True)
+            subprocess.run(cmd, shell=True, check=False)
 
         self._compress_csv_files.run(protected_bc_dir)
         self._remove_csv_files.run(protected_bc_dir)
