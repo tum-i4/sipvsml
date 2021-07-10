@@ -49,15 +49,15 @@ def main():
 
     preprocessor = create_preprocessor(args.preprocessors, labeled_bc_dir)
     bc_dirs = list(get_protected_bc_dirs(labeled_bc_dir))
-    for bc_dir in bc_dirs:
-        preprocessor.run(bc_dir)
+    # for bc_dir in bc_dirs:
+    #     preprocessor.run(bc_dir)
 
-    # with ProcessPoolExecutor() as process_pool:
-    #     list(tqdm(
-    #         process_pool.map(preprocessor.run, bc_dirs),
-    #         total=len(bc_dirs),
-    #         desc='preprocessing binaries'
-    #     ))
+    with ProcessPoolExecutor() as process_pool:
+        list(tqdm(
+            process_pool.map(preprocessor.run, bc_dirs),
+            total=len(bc_dirs),
+            desc='preprocessing binaries'
+        ))
 
 
 if __name__ == '__main__':
