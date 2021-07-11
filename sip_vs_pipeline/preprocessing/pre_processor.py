@@ -178,7 +178,7 @@ class PDGPreProcessor(PreProcessor):
 
 
 class KFoldSplit(PreProcessor):
-    def __init__(self, k_folds=11, train_fraction=0.8, seed=42) -> None:
+    def __init__(self, k_folds=7, train_fraction=0.8, seed=42) -> None:
         super().__init__()
         self.seed = seed
         self.k_folds = k_folds
