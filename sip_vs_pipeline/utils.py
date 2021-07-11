@@ -76,4 +76,8 @@ def blocks_for_fold(split_fold_path):
 
     data_path = pathlib.Path('/'.join(split_fold_path.parts[:split_fold_path.parts.index('folds')]))
     blocks_df = read_blocks_df(data_path / 'blocks.csv.gz')
-    return blocks_df[blocks_df['program'].map(lambda x: x.split('.')[0]).isin(split_programs)]
+    return blocks_df[blocks_df['program'].map(get_program_name_from_filename).isin(split_programs)]
+
+
+def get_program_name_from_filename(file_name):
+    return file_name.split('-')[0].split('.')[0]

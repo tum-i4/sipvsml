@@ -6,7 +6,8 @@ import subprocess
 from collections import defaultdict
 
 from sip_vs_pipeline.preprocessing.ir_line_parser import generalize_ir_line
-from sip_vs_pipeline.utils import read_blocks_df, write_blocks_df, write_relations_df, read_relations_df
+from sip_vs_pipeline.utils import read_blocks_df, write_blocks_df, write_relations_df, read_relations_df, \
+    get_program_name_from_filename
 
 CODE2VEC_REPOSITORY_PATH = pathlib.Path(os.getenv('CODE2VEC_REPOSITORY_PATH', '/home/nika/Desktop/Thesis/code2vec'))
 LLVM_MODULE_LABELLING_PASS_SO_PATH = pathlib.Path(__file__).parent.parent.parent / 'code2vec_extractor' / \
@@ -237,7 +238,7 @@ class KFoldSplit(PreProcessor):
         for child in protected_bc_dir.iterdir():
             if child.name.endswith('.bc'):
                 # programs_dict[child.name[:-3].split('-')[0]].append(child)
-                programs_dict[child.name.split('-')[0].split('.')[0]].append(child)
+                programs_dict[get_program_name_from_filename(child.name)].append(child)
         return programs_dict
 
 
