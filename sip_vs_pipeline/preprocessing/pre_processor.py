@@ -181,11 +181,10 @@ class PDGPreProcessor(PreProcessor):
 
 
 class KFoldSplit(PreProcessor):
-    def __init__(self, k_folds=7, train_fraction=0.8, seed=42) -> None:
+    def __init__(self, val_fraction=0.2, seed=42) -> None:
         super().__init__()
         self.seed = seed
-        self.k_folds = k_folds
-        self.train_fraction = train_fraction
+        self.val_fraction = val_fraction
 
     def run(self, protected_bc_dir):
         programs_dict = self._get_programs_dict(protected_bc_dir)
@@ -193,13 +192,14 @@ class KFoldSplit(PreProcessor):
         folds_dir = (protected_bc_dir / 'folds')
         random.seed(self.seed)
         program_names = list(programs_dict.keys())
-        train_split_index = int(len(program_names) * self.train_fraction)
+
+        val_data_size = int(len(program_names) * self.val_fraction)
         fold_dirs = []
-        random.seed(42)
-        for k in range(self.k_folds):
-            random.shuffle(program_names)
-            train_keys, val_keys = program_names[:train_split_index], program_names[train_split_index:]
+        for k in range(round(1 / self.val_fraction)):
+            val_keys = program_names[val_data_size * k: val_data_size * (k + 1)]
+            train_keys = [p for p in program_names if p not in val_keys]
             k_fold_dir = folds_dir / f'k_fold_{k}'
+
             train_dir, val_dir = k_fold_dir / 'train', k_fold_dir / 'val'
             os.makedirs(train_dir, exist_ok=True)
             os.makedirs(val_dir, exist_ok=True)
@@ -235,7 +235,8 @@ class KFoldSplit(PreProcessor):
     def _get_programs_dict(protected_bc_dir):
         programs_dict = defaultdict(list)
         for child in protected_bc_dir.iterdir():
-            if child.is_file():
+            if child.name.endswith('.bc'):
+                # programs_dict[child.name[:-3].split('-')[0]].append(child)
                 programs_dict[child.name.split('-')[0].split('.')[0]].append(child)
         return programs_dict
 
