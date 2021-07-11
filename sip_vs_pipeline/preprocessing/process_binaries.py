@@ -5,8 +5,8 @@ from concurrent.futures import ProcessPoolExecutor
 from tqdm import tqdm
 
 from sip_vs_pipeline.preprocessing.pre_processor import ComposePP, Ir2VecInstructionGen, \
-    CompressToZip, RemoveCsvFiles, RemoveRawBinaries, DisassembleBC, Code2VecPreProcessor, PDGPreProcessor, KFoldSplit, \
-    LLVMPassLabels
+    CompressToZip, RemoveCsvFiles, RemoveRawBinaries, DisassembleBC, Code2VecPreProcessor, PDGPreProcessor, \
+    KFoldSplit, LLVMPassLabels
 from sip_vs_pipeline.utils import get_protected_bc_dirs
 
 
@@ -18,6 +18,10 @@ def parse_args():
             'compress_csv', 'code2vec', 'general_ir', 'disassemble_bc', 'remove_raw_bc', 'remove_csv_files', 'pdg',
             'k_fold_split', 'llvm_sip_labels'
         ], nargs='+', help='Which preprocessors to run'
+    )
+    parser.add_argument(
+        '--run_sequentially', default=False,
+        type=bool, help='Run processing sequentially, in a single process'
     )
     args = parser.parse_args()
     return args
@@ -55,15 +59,17 @@ def main():
 
     preprocessor = create_preprocessor(args.preprocessors, labeled_bc_dir)
     bc_dirs = list(get_protected_bc_dirs(labeled_bc_dir))
-    # for bc_dir in bc_dirs:
-    #     preprocessor.run(bc_dir)
 
-    with ProcessPoolExecutor() as process_pool:
-        list(tqdm(
-            process_pool.map(preprocessor.run, bc_dirs),
-            total=len(bc_dirs),
-            desc='preprocessing binaries'
-        ))
+    if args.run_sequentially:
+        for bc_dir in tqdm(bc_dirs, desc='preprocessing binaries'):
+            preprocessor.run(bc_dir)
+    else:
+        with ProcessPoolExecutor() as process_pool:
+            list(tqdm(
+                process_pool.map(preprocessor.run, bc_dirs),
+                total=len(bc_dirs),
+                desc='preprocessing binaries'
+            ))
 
 
 if __name__ == '__main__':

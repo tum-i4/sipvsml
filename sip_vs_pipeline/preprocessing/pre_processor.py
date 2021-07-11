@@ -121,7 +121,7 @@ class Code2VecPreProcessor(PreProcessor):
     def _extract_ast_paths(self, bc_path):
         raw_c2v_path = bc_path.with_suffix('.raw_c2v')
 
-        if raw_c2v_path.exists():
+        if raw_c2v_path.exists() and raw_c2v_path.stat().st_size > 0:
             return raw_c2v_path
 
         ll_path = bc_path.with_suffix('.ll')
@@ -133,6 +133,8 @@ class Code2VecPreProcessor(PreProcessor):
             '--file', str(ll_path)
         ]
         c2v_text = subprocess.check_output(cmd)
+        assert len(c2v_text) > 0
+
         with open(raw_c2v_path, 'wb') as out:
             out.write(c2v_text)
         return raw_c2v_path
