@@ -187,6 +187,9 @@ class KFoldSplit(PreProcessor):
     def run(self, protected_bc_dir):
         programs_dict = self._get_programs_dict(protected_bc_dir)
 
+        block_df = read_blocks_df(protected_bc_dir / 'blocks.csv.gz')
+        relations_df = read_relations_df(protected_bc_dir / 'relations.csv.gz')
+
         folds_dir = (protected_bc_dir / 'folds')
         random.seed(self.seed)
         program_names = list(programs_dict.keys())
@@ -202,8 +205,21 @@ class KFoldSplit(PreProcessor):
             os.makedirs(val_dir, exist_ok=True)
             self._copy_files(programs_dict, train_dir, train_keys)
             self._copy_files(programs_dict, val_dir, val_keys)
+
+            self.split_and_write_csv_files(block_df, relations_df, train_dir, train_keys)
+            self.split_and_write_csv_files(block_df, relations_df, val_dir, val_keys)
             fold_dirs.append(k_fold_dir)
+
         return fold_dirs
+
+    @staticmethod
+    def split_and_write_csv_files(block_df, relations_df, out_dir, program):
+        fold_blocks_df = block_df[block_df['program'].map(lambda x: x.split('-')[0]).isin(program)]
+        write_blocks_df(out_dir / 'blocks.csv.gz', fold_blocks_df)
+        fold_relations_df = relations_df[
+            relations_df['source'].isin(fold_blocks_df.index) | relations_df['target'].isin(fold_blocks_df.index)
+            ]
+        write_relations_df(out_dir / 'relations.csv.gz', fold_relations_df)
 
     @staticmethod
     def _copy_files(programs_dict, dest_dir, keys):
