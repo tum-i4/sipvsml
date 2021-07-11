@@ -212,8 +212,9 @@ class KFoldSplit(PreProcessor):
                 copy_file(bc_path, dest_dir / bc_path.name)
 
     @staticmethod
-    def _get_programs_dict(file_paths):
+    def _get_programs_dict(protected_bc_dir):
         programs_dict = defaultdict(list)
-        for file in file_paths:
-            programs_dict[file.name.split('-')[0].split('.')[0]].append(file)
+        for child in protected_bc_dir.iterdir():
+            if child.is_file():
+                programs_dict[child.name.split('-')[0].split('.')[0]].append(child)
         return programs_dict

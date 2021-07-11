@@ -14,7 +14,8 @@ def parse_args():
     parser.add_argument('labeled_bc_dir', help='Directory where labeled binaries are stored')
     parser.add_argument(
         '--preprocessors', choices=[
-            'compress_csv', 'code2vec', 'general_ir', 'disassemble_bc', 'remove_raw_bc', 'remove_csv_files', 'pdg'
+            'compress_csv', 'code2vec', 'general_ir', 'disassemble_bc', 'remove_raw_bc', 'remove_csv_files', 'pdg',
+            'k_fold_split'
         ], nargs='+', help='Which preprocessors to run'
     )
     args = parser.parse_args()
