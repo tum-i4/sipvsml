@@ -9,6 +9,8 @@ from sip_vs_pipeline.preprocessing.ir_line_parser import generalize_ir_line
 from sip_vs_pipeline.utils import read_blocks_df, write_blocks_df, write_relations_df, read_relations_df
 
 CODE2VEC_REPOSITORY_PATH = pathlib.Path(os.getenv('CODE2VEC_REPOSITORY_PATH', '/home/nika/Desktop/Thesis/code2vec'))
+LLVM_MODULE_LABELLING_PASS_SO_PATH = pathlib.Path(__file__).parent.parent.parent / 'code2vec_extractor' / \
+                                     'llvm_labelling_pass' / 'build' / 'libModuleLabelling.so'
 
 
 class PreProcessor:
@@ -236,3 +238,25 @@ class KFoldSplit(PreProcessor):
             if child.is_file():
                 programs_dict[child.name.split('-')[0].split('.')[0]].append(child)
         return programs_dict
+
+
+class LLVMPassLabels(PreProcessor):
+    def __init__(self, llvm_so_path=LLVM_MODULE_LABELLING_PASS_SO_PATH) -> None:
+        super().__init__()
+        self.llvm_so_path = llvm_so_path
+
+    def run(self, protected_bc_dir):
+        bc_files = [x for x in protected_bc_dir.iterdir() if x.suffix == '.bc']
+        for bc_file_path in bc_files:
+            cmd = [
+                'opt-10',
+                '-load',
+                str(self.llvm_so_path),
+                f'-bc-file-path=LABELED-BCs/{bc_file_path.parent.parent.name}/{bc_file_path.parent.name}/',
+                '-legacy-module-labelling',
+                '-disable-output',
+                str(bc_file_path)
+            ]
+            llvm_pass_labels = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode()
+            with open(bc_file_path.with_suffix('.sip_labels'), 'w', encoding='utf-8') as out:
+                out.write(llvm_pass_labels)

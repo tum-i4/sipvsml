@@ -5,7 +5,8 @@ from concurrent.futures import ProcessPoolExecutor
 from tqdm import tqdm
 
 from sip_vs_pipeline.preprocessing.pre_processor import ComposePP, Ir2VecInstructionGen, \
-    CompressToZip, RemoveCsvFiles, RemoveRawBinaries, DisassembleBC, Code2VecPreProcessor, PDGPreProcessor, KFoldSplit
+    CompressToZip, RemoveCsvFiles, RemoveRawBinaries, DisassembleBC, Code2VecPreProcessor, PDGPreProcessor, KFoldSplit, \
+    LLVMPassLabels
 from sip_vs_pipeline.utils import get_protected_bc_dirs
 
 
@@ -15,7 +16,7 @@ def parse_args():
     parser.add_argument(
         '--preprocessors', choices=[
             'compress_csv', 'code2vec', 'general_ir', 'disassemble_bc', 'remove_raw_bc', 'remove_csv_files', 'pdg',
-            'k_fold_split'
+            'k_fold_split', 'llvm_sip_labels'
         ], nargs='+', help='Which preprocessors to run'
     )
     args = parser.parse_args()
@@ -41,6 +42,8 @@ def create_preprocessor(preprocessors, labeled_bc_dir):
             pps.append(PDGPreProcessor(labeled_bc_dir))
         elif pp == 'k_fold_split':
             pps.append(KFoldSplit())
+        elif pp == 'llvm_sip_labels':
+            pps.append(LLVMPassLabels())
         else:
             raise RuntimeError(f'Unknown pp {pp}')
     return ComposePP(*pps)
