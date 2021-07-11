@@ -1,3 +1,4 @@
+import json
 import os
 import pathlib
 import random
@@ -187,9 +188,6 @@ class KFoldSplit(PreProcessor):
     def run(self, protected_bc_dir):
         programs_dict = self._get_programs_dict(protected_bc_dir)
 
-        block_df = read_blocks_df(protected_bc_dir / 'blocks.csv.gz')
-        relations_df = read_relations_df(protected_bc_dir / 'relations.csv.gz')
-
         folds_dir = (protected_bc_dir / 'folds')
         random.seed(self.seed)
         program_names = list(programs_dict.keys())
@@ -203,14 +201,18 @@ class KFoldSplit(PreProcessor):
             train_dir, val_dir = k_fold_dir / 'train', k_fold_dir / 'val'
             os.makedirs(train_dir, exist_ok=True)
             os.makedirs(val_dir, exist_ok=True)
-            self._copy_files(programs_dict, train_dir, train_keys)
-            self._copy_files(programs_dict, val_dir, val_keys)
 
-            self.split_and_write_csv_files(block_df, relations_df, train_dir, train_keys)
-            self.split_and_write_csv_files(block_df, relations_df, val_dir, val_keys)
+            self._write_json(train_dir / 'programs.json', train_keys)
+            self._write_json(val_dir / 'programs.json', val_keys)
+
             fold_dirs.append(k_fold_dir)
 
         return fold_dirs
+
+    @staticmethod
+    def _write_json(file_path, json_data):
+        with open(file_path, 'w', encoding='utf-8') as out:
+            json.dump(json_data, out, indent=4, ensure_ascii=False)
 
     @staticmethod
     def split_and_write_csv_files(block_df, relations_df, out_dir, program):
