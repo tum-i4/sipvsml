@@ -3,10 +3,10 @@ import json
 import numpy as np
 import pandas as pd
 
-from sip_vs_pipeline.feature_extraction.extractor_base import FeatureExtractor
+from sip_vs_pipeline.feature_extraction.extractor_base import BlockFeatureExtractor
 
 
-class IR2VecExtractor(FeatureExtractor):
+class IR2VecExtractor(BlockFeatureExtractor):
     def __init__(self, name, vocab_path, rewrite=False, ir_delimiter='|.|', w0=1.0, wt=0.5, wa=0.25) -> None:
         super().__init__(name, rewrite)
         self.vocab_path = vocab_path
@@ -16,7 +16,7 @@ class IR2VecExtractor(FeatureExtractor):
         self.wt = wt
         self.wa = wa
 
-    def _extract_features(self, blocks_df):
+    def extract_using_blocks_df(self, blocks_df):
         generalized_blocks = blocks_df['generalized_block']
         embeddings = generalized_blocks.map(self._get_block_embedding)
         df = pd.DataFrame(embeddings.tolist(), index=embeddings.index)

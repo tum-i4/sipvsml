@@ -1,4 +1,5 @@
 import json
+import pathlib
 
 import pandas as pd
 
@@ -51,6 +52,28 @@ def get_protected_bc_dirs(labeled_bc_dir):
             yield data_dir
 
 
+def get_fold_dirs(labeled_bc_dir):
+    for sub_folder in labeled_bc_dir.iterdir():
+        for data_dir in sub_folder.iterdir():
+            for sub_dir in (data_dir / 'folds').iterdir():
+                if sub_dir.name.startswith('k_fold_'):
+                    yield sub_dir
+
+
 def write_json(training_res, training_results_path):
     with open(training_results_path, 'w', encoding='utf-8') as out:
         json.dump(training_res, out, ensure_ascii=False, indent=4)
+
+
+def read_json(json_path):
+    with open(json_path) as inp:
+        return json.load(inp)
+
+
+def blocks_for_fold(split_fold_path):
+    json_path = split_fold_path / 'programs.json'
+    split_programs = read_json(json_path)
+
+    data_path = pathlib.Path('/'.join(split_fold_path.parts[:split_fold_path.parts.index('folds')]))
+    blocks_df = read_blocks_df(data_path / 'blocks.csv.gz')
+    return blocks_df[blocks_df['program'].map(lambda x: x.split('.')[0]).isin(split_programs)]
