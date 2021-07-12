@@ -25,9 +25,7 @@ class Code2VecExtractor(FeatureExtractor):
 
     def extract(self, train_dir, val_dir):
         fold_dir = train_dir.parent
-        model_dir = fold_dir / 'code2vec_llir_model'
-        os.makedirs(model_dir, exist_ok=True)
-        train_vectors_path, val_vectors_path = self._train_code2vec_model(fold_dir, model_dir)
+        train_vectors_path, val_vectors_path = self._train_code2vec_model(fold_dir)
 
         self._compress_and_write_features(
             train_dir, train_vectors_path, train_dir / f'{self.name}.features.csv.gz'
@@ -38,7 +36,6 @@ class Code2VecExtractor(FeatureExtractor):
         )
 
         # cleanup
-        shutil.rmtree(model_dir)
         for child in fold_dir.iterdir():
             if child.name.endswith('.c2v') or child.name.endswith('.c2v.vectors'):
                 child.unlink()
@@ -54,7 +51,7 @@ class Code2VecExtractor(FeatureExtractor):
         subprocess.check_call(cmd, cwd=str(self.code2vec_path.absolute()))
         return fold_dir / 'code2vec_llir.train.c2v', fold_dir / 'code2vec_llir.val.c2v'
 
-    def _train_code2vec_model(self, fold_dir, model_dir):
+    def _train_code2vec_model(self, fold_dir):
         self._generate_histogram_files(fold_dir)
 
         cmd = [
@@ -62,7 +59,6 @@ class Code2VecExtractor(FeatureExtractor):
             '--data', str(fold_dir / 'code2vec_llir'),
             '--test', str(fold_dir / 'code2vec_llir.val.c2v'),
             '--test', str(fold_dir / 'code2vec_llir.train.c2v'),
-            '--save', f'{model_dir}/',
             '--framework', 'tensorflow',
             '--export_code_vectors'
         ]
