@@ -1,9 +1,19 @@
+import os
 import subprocess
 
 import pandas as pd
 
 from sip_vs_pipeline.feature_extraction.extractor_base import FeatureExtractor
-from sip_vs_pipeline.utils import read_blocks_df, read_json, get_program_name_from_filename
+from sip_vs_pipeline.utils import read_json, get_program_name_from_filename, blocks_for_fold
+
+
+def move_file(src_path, dst_path, block_size=1024*1024*8):
+    with open(src_path, 'rb') as inp, open(dst_path, 'wb') as out:
+        while True:
+            block = inp.read(block_size)
+            if len(block) == 0:
+                break
+            out.write(block)
 
 
 class Code2VecExtractor(FeatureExtractor):
@@ -15,88 +25,45 @@ class Code2VecExtractor(FeatureExtractor):
     def extract(self, train_dir, val_dir):
         fold_dir = train_dir.parent
         model_dir = fold_dir / 'code2vec_llir_model'
-        if not model_dir.exists():
-            self._train_code2vec_model(fold_dir, train_dir, val_dir, model_dir)
-        cmd = [
-            'python', str(self.code2vec_path / 'code2vec.py'),
-            '--load', model_dir / 'saved_model_iter1',
-            '--framework', 'tensorflow',
-            '--export_code_vectors',
-            '--test', str(fold_dir / 'code2vec_llir.val.c2v')
-        ]
-        # TODO compress and return features dataframe
-        print(' '.join(cmd))
+        os.makedirs(model_dir, exist_ok=True)
+        train_vectors_path, val_vectors_path = self._train_code2vec_model(fold_dir, model_dir)
 
-    def _generate_histogram_files(self, fold_dir, train_dir, val_dir):
+        self._compress_and_write_features(
+            train_dir, train_vectors_path, train_dir / f'{self.name}.features.csv.gz'
+        )
+
+        self._compress_and_write_features(
+            val_dir, val_vectors_path, val_dir / f'{self.name}.features.csv.gz'
+        )
+
+    def _generate_histogram_files(self, fold_dir):
         train_data_file = fold_dir / 'code2vec_llir.train.raw.txt'
-        self._collect_raw_c2v_files(train_dir, train_data_file)
+        self._collect_raw_c2v_files(fold_dir / 'train', train_data_file)
 
         val_data_file = fold_dir / 'code2vec_llir.val.raw.txt'
-        self._collect_raw_c2v_files(val_dir, val_data_file)
+        self._collect_raw_c2v_files(fold_dir / 'val', val_data_file)
 
         cmd = [str(self.code2vec_path / 'preprocess_llir_sip_vs_ml.sh'), str(fold_dir)]
         subprocess.check_call(cmd, cwd=str(self.code2vec_path.absolute()))
         return fold_dir / 'code2vec_llir.train.c2v', fold_dir / 'code2vec_llir.val.c2v'
 
-    def _extract_features(self, binaries_dir):
-        blocks_df = read_blocks_df(binaries_dir / 'blocks.csv.gz')
-        bc_paths = [x for x in binaries_dir.iterdir() if x.suffix == '.bc']
-
-        features = []
-        all_block_uids = set(blocks_df.index)
-        for bc_path in bc_paths:
-            code2vec_vectors_path = self._extract_code2vec_vectors(bc_path)
-            df = self._read_feature_vectors(bc_path, code2vec_vectors_path)
-            assert len(set(df[0]) & all_block_uids) > 0
-            features.append(df)
-        return pd.concat(features)
-
-    def _extract_code2vec_vectors(self, bc_path):
-        code2vec_vectors = bc_path.parent / f'{bc_path.name.split(".")[0]}.c2v_vec'
-        if not code2vec_vectors.exists() or self.rewrite:
-            c2v_file_path = self._generate_c2v_file(bc_path)
-            cmd = [
-                'python',
-                str(self.code2vec_path / 'code2vec.py'),
-                '--load',
-                str(self._model_path),
-                '--framework',
-                'tensorflow',
-                '--export_code_vectors',
-                '--test',
-                str(c2v_file_path)
-            ]
-            subprocess.check_call(cmd)
-        return code2vec_vectors
-
-    def _read_feature_vectors(self, bc_file_path, code2vec_vectors_path):
-        code2vec_vectors = []
-        with open(code2vec_vectors_path) as inp:
-            for line in inp:
-                code2vec_vectors.append([float(x) for x in line.split()])
-
-        with open(bc_file_path.with_suffix('.sip_labels')) as inp:
-            llvm_pass_labels = inp.readlines()
-
-        assert len(code2vec_vectors) == len(llvm_pass_labels)
-
-        features = []
-        for feature_vector, llvm_pass_line in zip(code2vec_vectors, llvm_pass_labels):
-            block_name, block_uid, *_ = llvm_pass_line.split('\t')
-            features.append([block_uid] + feature_vector)
-        return pd.DataFrame(features)
-
-    def _train_code2vec_model(self, fold_dir, train_dir, val_dir, model_dir):
-        self._generate_histogram_files(fold_dir, train_dir, val_dir)
+    def _train_code2vec_model(self, fold_dir, model_dir):
+        self._generate_histogram_files(fold_dir)
 
         cmd = [
             'python', str(self.code2vec_path / 'code2vec.py'),
             '--data', str(fold_dir / 'code2vec_llir'),
-            '--save', str(model_dir),
-            '--framework', 'tensorflow'
+            '--test', str(fold_dir / 'code2vec_llir.val.c2v'),
+            '--test', str(fold_dir / 'code2vec_llir.train.c2v'),
+            '--save', f'{model_dir}/',
+            '--framework', 'tensorflow',
+            '--export_code_vectors'
         ]
         output = subprocess.check_output(cmd)
-        # return model_dir
+        with open(model_dir / 'training_log.txt', 'wb') as out:
+            out.write(output)
+
+        return fold_dir / 'code2vec_llir.train.c2v.vectors', fold_dir / 'code2vec_llir.val.c2v.vectors'
 
     @staticmethod
     def _collect_raw_c2v_files(data_dir, train_data_file):
@@ -110,3 +77,30 @@ class Code2VecExtractor(FeatureExtractor):
                 with open(file) as inp:
                     assert out.write(inp.read()) > 0
                     out.write('\n')
+
+    @staticmethod
+    def _compress_and_write_features(bc_dir, vectors_path, out_path):
+        code2vec_vectors = []
+        with open(vectors_path) as inp:
+            for line in inp:
+                code2vec_vectors.append([float(x) for x in line.split()])
+
+        blocks_df = blocks_for_fold(bc_dir)
+        llvm_pass_labels = []
+        for program_name in list(blocks_df['program'].unique()):
+            with open((bc_dir.parent.parent.parent / program_name).with_suffix('.sip_labels')) as inp:
+                for line in inp:
+                    llvm_pass_labels.append(line)
+
+        assert len(code2vec_vectors) == len(llvm_pass_labels)
+
+        features = []
+        for feature_vector, llvm_pass_line in zip(code2vec_vectors, llvm_pass_labels):
+            block_name, block_uid, *_ = llvm_pass_line.split('\t')
+            features.append([block_uid] + feature_vector)
+
+        pd.DataFrame(features).to_csv(
+            out_path,
+            index=False,
+            header=False
+        )
