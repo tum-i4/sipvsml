@@ -40,7 +40,7 @@ class Code2VecExtractor(FeatureExtractor):
         # cleanup
         shutil.rmtree(model_dir)
         for child in fold_dir.iterdir():
-            if child.name.endswith('.c2v') or child.name.endswith('.c2v.vectors'):
+            if any([child.name.endswith(suffix) for suffix in ['.c2v', '.c2v.vectors', '.num_examples']]):
                 child.unlink()
 
     def _generate_histogram_files(self, fold_dir):
@@ -61,14 +61,22 @@ class Code2VecExtractor(FeatureExtractor):
             'python', str(self.code2vec_path / 'code2vec.py'),
             '--data', str(fold_dir / 'code2vec_llir'),
             '--test', str(fold_dir / 'code2vec_llir.val.c2v'),
-            '--test', str(fold_dir / 'code2vec_llir.train.c2v'),
             '--save', f'{model_dir}/',
             '--framework', 'tensorflow',
             '--export_code_vectors'
         ]
-        output = subprocess.check_output(cmd)
+        output = subprocess.check_output(cmd, cwd=str(self.code2vec_path))
         with open(fold_dir / 'code2vec_training_log.txt', 'wb') as out:
             out.write(output)
+
+        cmd = [
+            'python', str(self.code2vec_path / 'code2vec.py'),
+            '--load', f'{model_dir}/',
+            '--test', str(fold_dir / 'code2vec_llir.train.c2v'),
+            '--framework', 'tensorflow',
+            '--export_code_vectors'
+        ]
+        subprocess.check_call(cmd)
 
         return fold_dir / 'code2vec_llir.train.c2v.vectors', fold_dir / 'code2vec_llir.val.c2v.vectors'
 
