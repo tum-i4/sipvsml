@@ -9,10 +9,6 @@ from sip_vs_pipeline.preprocessing.ir_line_parser import generalize_ir_line
 from sip_vs_pipeline.utils import read_blocks_df, write_blocks_df, write_relations_df, read_relations_df, \
     get_program_name_from_filename
 
-CODE2VEC_REPOSITORY_PATH = pathlib.Path(os.getenv('CODE2VEC_REPOSITORY_PATH', '/home/nika/Desktop/Thesis/code2vec'))
-LLVM_MODULE_LABELLING_PASS_SO_PATH = pathlib.Path(__file__).parent.parent.parent / 'code2vec_extractor' / \
-                                     'llvm_labelling_pass' / 'build' / 'libModuleLabelling.so'
-
 
 class PreProcessor:
     def run(self, protected_bc_dir):
