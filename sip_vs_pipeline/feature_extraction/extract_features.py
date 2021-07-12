@@ -50,8 +50,11 @@ def parse_args():
         CODE2VEC_FEATURE_EXTRACTOR, TF_IDF_FEATURE_EXTRACTOR, IR2VEC_FEATURE_EXTRACTOR, SEG_FEATURE_EXTRACTOR, 'all'
     ], help='Name of the feature extractor to use')
     parser.add_argument(
-        '--run_sequentially', default=False,
-        type=bool, help='Run processing sequentially, in a single process'
+        '--run_sequentially', default=False, action='store_true',
+        help='Run processing sequentially, in a single process'
+    )
+    parser.add_argument(
+        '--max_workers', default=None, required=False, type=int, help='Max worker processes to spawn for Process Pool'
     )
     parser.add_argument('labeled_bc_dir', help='Directory where labeled binaries are stored')
     args = parser.parse_args()
@@ -98,12 +101,11 @@ def main():
         for fold_dir in all_fold_dirs:
             process_blocks([extractor_name, fold_dir])
     else:
-        args = ((extractor_name, fold_dir) for fold_dir in all_fold_dirs)
-        with ProcessPoolExecutor() as process_pool:
-            args = list(args)
+        with ProcessPoolExecutor(max_workers=args.max_workers) as process_pool:
+            pool_args = [(extractor_name, fold_dir) for fold_dir in all_fold_dirs]
             list(tqdm(
-                process_pool.map(process_blocks, args),
-                total=len(args),
+                process_pool.map(process_blocks, pool_args),
+                total=len(pool_args),
                 desc='extracting features'
             ))
 
