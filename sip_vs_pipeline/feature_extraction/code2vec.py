@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 
 import pandas as pd
@@ -36,6 +37,12 @@ class Code2VecExtractor(FeatureExtractor):
             val_dir, val_vectors_path, val_dir / f'{self.name}.features.csv.gz'
         )
 
+        # cleanup
+        shutil.rmtree(model_dir)
+        for child in fold_dir.iterdir():
+            if child.name.endswith('.c2v') or child.name.endswith('.c2v.vectors'):
+                child.unlink()
+
     def _generate_histogram_files(self, fold_dir):
         train_data_file = fold_dir / 'code2vec_llir.train.raw.txt'
         self._collect_raw_c2v_files(fold_dir / 'train', train_data_file)
@@ -60,7 +67,7 @@ class Code2VecExtractor(FeatureExtractor):
             '--export_code_vectors'
         ]
         output = subprocess.check_output(cmd)
-        with open(model_dir / 'training_log.txt', 'wb') as out:
+        with open(fold_dir / 'code2vec_training_log.txt', 'wb') as out:
             out.write(output)
 
         return fold_dir / 'code2vec_llir.train.c2v.vectors', fold_dir / 'code2vec_llir.val.c2v.vectors'
