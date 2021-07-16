@@ -5,7 +5,7 @@ import pathlib
 import pandas as pd
 
 CODE2VEC_REPOSITORY_PATH = pathlib.Path(os.getenv('CODE2VEC_REPOSITORY_PATH', '/home/nika/Desktop/Thesis/code2vec'))
-LLVM_MODULE_LABELLING_PASS_SO_PATH = pathlib.Path(__file__).parent.parent.parent / 'code2vec_extractor' / \
+LLVM_MODULE_LABELLING_PASS_SO_PATH = CODE2VEC_REPOSITORY_PATH / 'LLIRExtractor' / \
                                      'llvm_labelling_pass' / 'build' / 'libModuleLabelling.so'
 
 
