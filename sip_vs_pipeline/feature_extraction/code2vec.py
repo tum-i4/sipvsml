@@ -95,7 +95,7 @@ class Code2VecExtractor(FeatureExtractor):
         ]
         with open(train_data_file, 'w') as out:
             for file in input_files:
-                with gzip.open(file) as inp:
+                with gzip.open(file, mode='rt') as inp:
                     assert out.write(inp.read()) > 0
                     out.write('\n')
 
