@@ -1,3 +1,4 @@
+import gzip
 import os
 import shutil
 import subprocess
@@ -90,11 +91,11 @@ class Code2VecExtractor(FeatureExtractor):
         program_names = read_json(data_dir / 'programs.json')
         input_files = [
             file for file in data_dir.parent.parent.parent.iterdir()
-            if file.name.endswith('raw_c2v') and get_program_name_from_filename(file.name) in program_names
+            if file.name.endswith('.raw_c2v.gz') and get_program_name_from_filename(file.name) in program_names
         ]
         with open(train_data_file, 'w') as out:
             for file in input_files:
-                with open(file) as inp:
+                with gzip.open(file) as inp:
                     assert out.write(inp.read()) > 0
                     out.write('\n')
 

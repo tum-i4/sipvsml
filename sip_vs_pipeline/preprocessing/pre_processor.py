@@ -1,3 +1,4 @@
+import gzip
 import json
 import os
 import pathlib
@@ -115,7 +116,7 @@ class Code2VecPreProcessor(PreProcessor):
             self._extract_ast_paths(bc_path)
 
     def _extract_ast_paths(self, bc_path):
-        raw_c2v_path = bc_path.with_suffix('.raw_c2v')
+        raw_c2v_path = bc_path.with_suffix('.raw_c2v.gz')
 
         if raw_c2v_path.exists() and raw_c2v_path.stat().st_size > 0:
             return raw_c2v_path
@@ -131,7 +132,7 @@ class Code2VecPreProcessor(PreProcessor):
         c2v_text = subprocess.check_output(cmd)
         assert len(c2v_text) > 0
 
-        with open(raw_c2v_path, 'wb') as out:
+        with gzip.open(raw_c2v_path, 'wb') as out:
             out.write(c2v_text)
         return raw_c2v_path
 
