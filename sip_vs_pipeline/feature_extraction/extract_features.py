@@ -98,7 +98,7 @@ def main():
     extractor_name = args.feature_extractor
 
     if args.run_sequentially:
-        for fold_dir in all_fold_dirs:
+        for fold_dir in tqdm(list(all_fold_dirs), desc='extracting features'):
             process_blocks([extractor_name, fold_dir])
     else:
         with ProcessPoolExecutor(max_workers=args.max_workers) as process_pool:
