@@ -6,7 +6,7 @@ import subprocess
 import pandas as pd
 
 from sip_vs_pipeline.feature_extraction.extractor_base import FeatureExtractor
-from sip_vs_pipeline.utils import read_json, get_program_name_from_filename, blocks_for_fold
+from sip_vs_pipeline.utils import read_json, get_program_name_from_filename
 
 
 def move_file(src_path, dst_path, block_size=1024*1024*8):
@@ -22,7 +22,10 @@ class Code2VecExtractor(FeatureExtractor):
     def __init__(self, name, code2vec_path, rewrite=False) -> None:
         super().__init__(name, rewrite)
         self.code2vec_path = code2vec_path
-        self._model_path = None
+
+        # used to remember the order of block origins for code2vec training/val data
+        self._train_files = []
+        self._val = []
 
     def extract(self, train_dir, val_dir):
         train_features_path = train_dir / f'{self.name}.features.csv.gz'
@@ -36,11 +39,11 @@ class Code2VecExtractor(FeatureExtractor):
         train_vectors_path, val_vectors_path = self._train_code2vec_model(fold_dir, model_dir)
 
         self._compress_and_write_features(
-            train_dir, train_vectors_path, train_features_path
+            train_vectors_path, train_features_path, self._train_files
         )
 
         self._compress_and_write_features(
-            val_dir, val_vectors_path, val_features_path
+            val_vectors_path, val_features_path, self._val_files
         )
 
         # cleanup
@@ -51,10 +54,10 @@ class Code2VecExtractor(FeatureExtractor):
 
     def _generate_histogram_files(self, fold_dir):
         train_data_file = fold_dir / 'code2vec_llir.train.raw.txt'
-        self._collect_raw_c2v_files(fold_dir / 'train', train_data_file)
+        self._train_files = self._collect_raw_c2v_files(fold_dir / 'train', train_data_file)
 
         val_data_file = fold_dir / 'code2vec_llir.val.raw.txt'
-        self._collect_raw_c2v_files(fold_dir / 'val', val_data_file)
+        self._val_files = self._collect_raw_c2v_files(fold_dir / 'val', val_data_file)
 
         cmd = [str(self.code2vec_path / 'preprocess_llir_sip_vs_ml.sh'), str(fold_dir)]
         subprocess.check_call(cmd, cwd=str(self.code2vec_path.absolute()))
@@ -98,18 +101,19 @@ class Code2VecExtractor(FeatureExtractor):
                 with gzip.open(file, mode='rt') as inp:
                     assert out.write(inp.read()) > 0
                     out.write('\n')
+        return input_files
 
     @staticmethod
-    def _compress_and_write_features(bc_dir, vectors_path, out_path):
+    def _compress_and_write_features(vectors_path, out_path, raw_c2v_files):
         code2vec_vectors = []
         with open(vectors_path) as inp:
             for line in inp:
                 code2vec_vectors.append([float(x) for x in line.split()])
 
-        blocks_df = blocks_for_fold(bc_dir)
         llvm_pass_labels = []
-        for program_name in list(blocks_df['program'].unique()):
-            with open((bc_dir.parent.parent.parent / program_name).with_suffix('.sip_labels')) as inp:
+        for raw_c2v_file in raw_c2v_files:
+            sip_labels_path = raw_c2v_file.with_name(raw_c2v_file.name.replace('.raw_c2v.gz', '.sip_labels'))
+            with open(sip_labels_path) as inp:
                 for line in inp:
                     llvm_pass_labels.append(line)
 

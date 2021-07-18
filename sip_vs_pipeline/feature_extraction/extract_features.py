@@ -94,6 +94,7 @@ def main():
     args = parse_args()
     labeled_bc_dir = pathlib.Path(args.labeled_bc_dir)
     all_fold_dirs = get_fold_dirs(labeled_bc_dir)
+    all_fold_dirs = [x for x in all_fold_dirs if '/simple-cov/SUB/' in str(x)]
 
     extractor_name = args.feature_extractor
 
