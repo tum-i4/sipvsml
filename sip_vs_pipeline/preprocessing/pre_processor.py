@@ -150,7 +150,6 @@ class PDGPreProcessor(PreProcessor):
         self.build_docker_image()
         self._compress_csv_files = CompressToZip()
         self._remove_csv_files = RemoveCsvFiles()
-        self._pdg_script_path = pathlib.Path(__file__).absolute().parent / 'extract_pdg_files.sh'
         self.labeled_bc_dir = labeled_bc_dir
 
     def build_docker_image(self):
