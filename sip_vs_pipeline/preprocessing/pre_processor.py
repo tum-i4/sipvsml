@@ -166,6 +166,7 @@ class PDGPreProcessor(PreProcessor):
             opt_command = 'opt-7 -load /home/sip/program-dependence-graph/build/libpdg.so -reg2mem -pdg-csv -append ' \
                           f'-relations "{container_labeled_bcs + "/relations.csv"}" ' \
                           f'-blocks "{container_labeled_bcs + "/blocks.csv"}" ' + \
+                          f'-o "{container_labeled_bcs + f"/{bc_file.name}"}" ' + \
                           container_labeled_bcs + f'/{bc_file.name} > /dev/null'
             data_script = ' && '.join([
                 'mkdir -p /home/sip/paperback/LABELED-BCs',
