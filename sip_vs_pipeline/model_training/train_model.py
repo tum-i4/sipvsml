@@ -30,20 +30,21 @@ def create_model(model_name):
     raise RuntimeError(f'Unknown model {model_name}')
 
 
-def run_train(data_dict, model_name, results_file_name, target_feature_name):
-    results_path = data_dict['data_dir'] / results_file_name
-    if results_path.exists():
-        print(f'{results_path} already exists, exiting...')
-        return
-    model = create_model(model_name)
-    results_data = model.train(data_dict, target_feature_name)
-    write_json(results_data, results_path)
+def run_train(dataset, model_name, results_file_name, target_feature_name):
+    for data_dict in dataset.iter_fold_data_dict():
+        results_path = data_dict['fold_dir'] / results_file_name
+        if results_path.exists():
+            print(f'{results_path} already exists, exiting...')
+            return
+        model = create_model(model_name)
+        results_data = model.train(data_dict, target_feature_name)
+        write_json(results_data, results_path)
 
 
 def run(features_data_dir, model_name, features, results_file_name):
     dataset = SIPSingleObfuscationDataset(features_data_dir, features)
     target_feature_name = dataset.target_feature_name
-    run_train(dataset.get_data_dict(), model_name, results_file_name, target_feature_name)
+    run_train(dataset, model_name, results_file_name, target_feature_name)
 
 
 def main():

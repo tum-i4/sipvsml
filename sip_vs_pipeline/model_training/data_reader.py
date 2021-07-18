@@ -1,6 +1,6 @@
 import pandas as pd
 
-from sip_vs_pipeline.utils import read_blocks_df, read_relations_df
+from sip_vs_pipeline.utils import read_blocks_df, read_relations_df, blocks_for_fold
 
 
 def get_data_csv_files(labeled_bc_dir, csv_file_name):
@@ -31,15 +31,28 @@ class SIPSingleObfuscationDataset:
         self._features_to_use = features_to_use
         self.target_feature_name = target_feature_name
 
-    def get_data_dict(self, combine_features=True):
-        block_csv_file_path = self.data_dir / 'blocks.csv.gz'
-        relations_file_path = self.data_dir / 'relations.csv.gz'
-        lazy_blocks_df = LazyVariable(lambda: read_blocks_df(block_csv_file_path)[[self.target_feature_name]])
-        lazy_relations_df = LazyVariable(lambda: read_relations_df(relations_file_path))
-        lazy_features_df = LazyVariable(lambda: self._read_features(self.data_dir, combine_features))
+    def iter_fold_data_dict(self):
+        for fold_dir in (self.data_dir / 'folds').iterdir():
+            if fold_dir.is_file():
+                continue
+            yield self._get_data_dict(fold_dir)
+
+    def _get_data_dict(self, fold_dir, combine_features=True):
         return {
-            'data_source': self.data_dir,
-            'data_dir': self.data_dir,
+            'data_source': self.data_dir.parent,
+            'data_dir':  self.data_dir,
+            'fold_dir':  fold_dir,
+            'train': self._get_sub_data_dir(fold_dir / 'train', combine_features),
+            'val': self._get_sub_data_dir(fold_dir / 'val', combine_features),
+        }
+
+    def _get_sub_data_dir(self, features_dir, combine_features):
+        relations_file_path = self.data_dir / 'relations.csv.gz'
+        lazy_blocks_df = LazyVariable(lambda: blocks_for_fold(features_dir)[[self.target_feature_name]])
+        lazy_relations_df = LazyVariable(lambda: read_relations_df(relations_file_path))
+        lazy_features_df = LazyVariable(lambda: self._read_features(features_dir, combine_features))
+
+        return {
             'blocks_df': lazy_blocks_df,
             'relations_df': lazy_relations_df,
             'features': lazy_features_df
