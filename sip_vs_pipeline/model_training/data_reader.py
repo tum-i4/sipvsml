@@ -67,6 +67,8 @@ class SIPSingleObfuscationDataset:
                 res[feature_name] = self._read_graph_features(data_dir)
             elif feature_name == 'tf_idf':
                 res[feature_name] = self._read_tf_idf_features(data_dir)
+            elif feature_name == 'code2vec':
+                res[feature_name] = self._read_code2vec_features(data_dir)
             else:
                 raise RuntimeError(f'Unknown features {feature_name}')
         if combine_features:
@@ -89,6 +91,9 @@ class SIPSingleObfuscationDataset:
 
     def _combine_features(self, features_dict):
         return pd.concat(features_dict.values(), axis=1)
+
+    def _read_code2vec_features(self, data_dir):
+        return self._read_features_csv_file(data_dir / 'code2vec.features.csv.gz')
 
 
 class SIPDataSet:
