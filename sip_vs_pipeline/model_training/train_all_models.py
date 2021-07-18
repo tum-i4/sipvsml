@@ -19,7 +19,7 @@ def parse_args():
         '--model', choices=['graph_sage'], help='Which model to use', default='graph_sage'
     )
     parser.add_argument(
-        '--use_features', type=str, nargs='+', choices=['ir2vec', 'seg', 'tf_idf'],
+        '--use_features', type=str, nargs='+', choices=['ir2vec', 'seg', 'tf_idf', 'code2vec'],
         help='Names of the features to use', required=True
     )
     parser.add_argument(
