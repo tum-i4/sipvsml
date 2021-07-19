@@ -61,13 +61,24 @@ class GraphSageSIPLocalizer:
         all_val_features = data_dict['val']['features'].get()
         val_blocks_df = data_dict['val']['blocks_df'].get()
 
+        classifier_results = []
+        train_data = pd.merge(train_blocks_df, all_train_features, on='uid')
+        val_data = pd.merge(val_blocks_df, all_val_features, on='uid')
+        all_features = pd.concat([all_train_features, all_val_features], axis=0)
+
+        # remove unused graph edges
+        relations_df = relations_df[
+            relations_df.source.isin(all_features.index) & relations_df.target.isin(all_features.index)
+        ]
+
+        # remove unconnected nodes
+        all_features = all_features.iloc[
+            all_features.index.isin(relations_df.source) | all_features.index.isin(relations_df.target)
+        ]
         gnx = build_gnx_network(relations_df)
 
-        classifier_results = []
-        train_data = pd.concat([train_blocks_df, all_train_features], axis=1)
-        val_data = pd.concat([val_blocks_df, all_val_features], axis=1)
         _, _, _, _, history, _, out_result = self._train_model(
-            gnx, train_data, val_data, pd.concat([all_train_features, all_val_features], axis=0), target_feature_name
+            gnx, train_data, val_data, all_features, target_feature_name
         )
         classifier_results.append(out_result['classifier'])
         out_result['classifier'] = average_classifiers(classifier_results)
