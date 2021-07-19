@@ -28,7 +28,7 @@ class SIPSingleObfuscationDataset:
     def __init__(self, features_dir, features_to_use, target_feature_name='subject') -> None:
         super().__init__()
         self.data_dir = features_dir
-        self._features_to_use = features_to_use
+        self.features_to_use = features_to_use
         self.target_feature_name = target_feature_name
 
     def iter_fold_data_dict(self):
@@ -60,7 +60,7 @@ class SIPSingleObfuscationDataset:
 
     def _read_features(self, data_dir, combine_features):
         res = {}
-        for feature_name in self._features_to_use:
+        for feature_name in self.features_to_use:
             if feature_name == 'ir2vec':
                 res[feature_name] = self._read_ir2vec_features(data_dir)
             elif feature_name == 'seg':

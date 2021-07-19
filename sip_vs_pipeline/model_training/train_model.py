@@ -38,6 +38,7 @@ def run_train(dataset, model_name, results_file_name, target_feature_name):
             return
         model = create_model(model_name)
         results_data = model.train(data_dict, target_feature_name)
+        results_data['features'] = dataset.features_to_use
         write_json(results_data, results_path)
 
 
