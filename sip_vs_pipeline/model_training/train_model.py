@@ -34,8 +34,8 @@ def run_train(dataset, model_name, results_file_name, target_feature_name):
     for data_dict in dataset.iter_fold_data_dict():
         results_path = data_dict['fold_dir'] / results_file_name
         if results_path.exists():
-            print(f'{results_path} already exists, exiting...')
-            return
+            print(f'{results_path} already exists, moving on...')
+            continue
         model = create_model(model_name)
         results_data = model.train(data_dict, target_feature_name)
         results_data['features'] = dataset.features_to_use
