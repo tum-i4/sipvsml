@@ -25,9 +25,16 @@ def find_results_json_files(path):
 def reconcile_results_into_dataframe(results_list):
     data = []
     for res_data in results_list:
+        obfuscation = res_data['data_dir']\
+            .replace('sbb-', '')\
+            .replace('sbb', '')\
+            .replace('-', '+')\
+            .replace('FLAs', 'CFF')\
+            .replace('BCF', 'BC')\
+            .replace('SUB', 'IS')
         data.append({
             'data_source': res_data['data_source'],
-            'obfuscation': res_data['data_dir'],
+            'obfuscation': obfuscation,
             'features': ' + '.join(res_data['features']),
             **res_data['results']['classifier']
         })
