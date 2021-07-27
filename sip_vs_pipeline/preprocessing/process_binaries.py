@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from sip_vs_pipeline.preprocessing.pre_processor import ComposePP, Ir2VecInstructionGen, \
     CompressToZip, RemoveCsvFiles, RemoveRawBinaries, DisassembleBC, Code2VecPreProcessor, PDGPreProcessor, \
-    KFoldSplit, LLVMPassLabels
+    KFoldSplit, LLVMPassLabels, RemoveLLMetadata
 from sip_vs_pipeline.utils import get_protected_bc_dirs
 
 
@@ -16,12 +16,12 @@ def parse_args():
     parser.add_argument(
         '--preprocessors', choices=[
             'compress_csv', 'code2vec', 'general_ir', 'disassemble_bc', 'remove_raw_bc', 'remove_csv_files', 'pdg',
-            'k_fold_split', 'llvm_sip_labels'
+            'k_fold_split', 'llvm_sip_labels', 'remove_ll_metadata'
         ], nargs='+', help='Which preprocessors to run'
     )
     parser.add_argument(
-        '--run_sequentially', default=False,
-        type=bool, help='Run processing sequentially, in a single process'
+        '--run_sequentially', default=False, action='store_true',
+        help='Run processing sequentially, in a single process'
     )
     args = parser.parse_args()
     return args
@@ -48,6 +48,8 @@ def create_preprocessor(preprocessors, labeled_bc_dir):
             pps.append(KFoldSplit())
         elif pp == 'llvm_sip_labels':
             pps.append(LLVMPassLabels())
+        elif pp == 'remove_ll_metadata':
+            pps.append(RemoveLLMetadata())
         else:
             raise RuntimeError(f'Unknown pp {pp}')
     return ComposePP(*pps)

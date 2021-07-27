@@ -1,8 +1,8 @@
 import gzip
 import json
 import os
-import pathlib
 import random
+import re
 import subprocess
 from collections import defaultdict
 
@@ -100,6 +100,28 @@ class DisassembleBC(PreProcessor):
                 subprocess.check_call([f'llvm-dis-{self.llvm_dis_version}', str(file)])
 
 
+class RemoveLLMetadata(PreProcessor):
+    def __init__(self, llvm_dis_version='10') -> None:
+        super().__init__()
+        self.llvm_dis_version = llvm_dis_version
+        self._metadata_re = re.compile(r', (![_a-zA-Z0-9 ,]+)+$')
+
+    def run(self, protected_bc_dir):
+        for file in protected_bc_dir.iterdir():
+            if file.suffix == '.bc':
+                file = file.with_suffix('.ll')
+                with open(file) as inp:
+                    content = inp.read()
+                with open(file, 'w') as out:
+                    out.write(self._remove_metadata(content))
+
+    def _remove_metadata(self, ll_content):
+        return '\n'.join(map(self._remove_line_metadata, ll_content.split('\n')))
+
+    def _remove_line_metadata(self, ll_line):
+        return self._metadata_re.sub('', ll_line)
+
+
 def copy_file(src_path, dest_path):
     with open(src_path, 'rb') as inp, open(dest_path, 'wb') as out:
         out.write(inp.read())
@@ -122,8 +144,7 @@ class Code2VecPreProcessor(PreProcessor):
             return raw_c2v_path
 
         ll_path = bc_path.with_suffix('.ll')
-        if not ll_path.exists():
-            self._disassemble(bc_path)
+        assert ll_path.exists()
 
         cmd = [
             'python', str(self.code2vec_repo_path / 'LLIRExtractor' / 'extract.py'),
@@ -135,10 +156,6 @@ class Code2VecPreProcessor(PreProcessor):
         with gzip.open(raw_c2v_path, 'wb') as out:
             out.write(c2v_text)
         return raw_c2v_path
-
-    @staticmethod
-    def _disassemble(bc_path):
-        subprocess.check_call(['llvm-dis-10', str(bc_path)])
 
 
 class PDGPreProcessor(PreProcessor):
