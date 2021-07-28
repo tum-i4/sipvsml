@@ -165,24 +165,14 @@ def get_ast(ll_file_path):
 
 
 def get_block_labels(ll_file_path):
-    cmd = [
-        'opt-10',
-        '-load',
-        './llvm_labelling_pass/build/libModuleLabelling.so',
-        '-legacy-module-labelling',
-        '-disable-output',
-        str(ll_file_path)
-    ]
-    cwd = str(pathlib.Path(__file__).parent.absolute())
-    labels = subprocess.check_output(cmd, cwd=cwd, stderr=subprocess.STDOUT)
-
     res = []
-    for line in labels.decode().splitlines(keepends=False):
-        if line.strip() == '':
-            continue
-        *_, label = line.split('\t')
-        res.append(label)
-    return res
+    with open(ll_file_path.with_suffix('.sip_labels')) as inp:
+        for line in map(str.strip, inp):
+            if line.strip() == '':
+                continue
+            *_, label = line.split('\t')
+            res.append(label)
+        return res
 
 
 def get_basic_blocks(ast, block_labels):
