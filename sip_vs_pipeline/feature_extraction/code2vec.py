@@ -30,13 +30,12 @@ class Code2VecExtractor(FeatureExtractor):
     def extract(self, train_dir, val_dir):
         train_features_path = train_dir / f'{self.name}.features.csv.gz'
         val_features_path = val_dir / f'{self.name}.features.csv.gz'
+        if not self.rewrite and train_features_path.exists() and val_features_path.exists():
+            return
 
         fold_dir = train_dir.parent
         model_dir = fold_dir / 'code2vec_llir_model'
         os.makedirs(model_dir, exist_ok=True)
-
-        if not self.rewrite and (fold_dir / 'code2vec_training_log.txt').exists():
-            return
 
         train_vectors_path, val_vectors_path = self._train_code2vec_model(fold_dir, model_dir)
 
