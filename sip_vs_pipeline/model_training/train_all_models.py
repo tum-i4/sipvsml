@@ -23,10 +23,6 @@ def parse_args():
         help='Names of the features to use', required=True
     )
     parser.add_argument(
-        '--results_file_name', type=str, required=True,
-        help='Names for the results file (graph_sage model creates one per obfuscation)'
-    )
-    parser.add_argument(
         '--num_processes', type=int, help='Number of parallel processes to start for model training',
         default=multiprocessing.cpu_count()
     )
@@ -84,7 +80,7 @@ def main():
     data_dir = pathlib.Path(args.labeled_bc_dir)
     model_name = args.model
     features = args.use_features
-    results_file_name = args.results_file_name
+    results_file_name = f"{'_'.join(features)}_results.json"
     num_processes = args.num_processes
     run(data_dir, model_name, features, results_file_name, num_processes)
 
