@@ -5,7 +5,7 @@ SUB='SUB'
 BCF='BCF'
 
 PERC=30
-DATASET='mibench-cov'
+DATASET='simple-cov'
 GENERATIONPATH='LABELED-BCs/'
 function edit {
 	echo switched to $1
@@ -37,8 +37,8 @@ function generate {
 				comb_dir="${combination/FLAs/FLA}"
 				comb_dir="${comb_dir/BCF/BCF$PERC}"
 				waitforjobs $(nproc)
-				echo generator-prot-obf.sh $prot $combination $ds "$GENERATIONPATH/$ds/$comb_dir"
-				bash generator-prot-obf.sh $prot $combination $ds "$GENERATIONPATH/$ds/$comb_dir" > /dev/null &
+				echo generator-prot-obf.sh $prot $combination "simple-cov" "$GENERATIONPATH/$ds/$comb_dir"
+				bash generator-prot-obf.sh $prot $combination "simple-cov" "$GENERATIONPATH/$ds/$comb_dir" > /dev/null &
 			done
 			waitforjobs 1
 		done
@@ -61,32 +61,6 @@ function verifyCountFiles {
 	done
 }
 
-function generateMibench {
-	DATASET='mibench-cov'
-	generate "NONE"
-	edit 30
-	generate "$BCF" "$FLA-$BCF" "$BCF-$FLA" "$SUB-$BCF" "$BCF-$SUB" "$FLA-$BCF-$SUB" "$FLA-$SUB-$BCF" "$BCF-$FLA-$SUB" "$BCF-$SUB-$FLA" "$SUB-$FLA-$BCF" "$SUB-$BCF-$FLA" "$SUB" "$FLA" "$SUB-$FLA" "$FLA-$SUB" "$BCF-$FLA"2 "$BCF-$FLA"2"-$SUB"2 "$BCF-$SUB"2"-$FLA"2
-
-	verifyCountFiles "$GENERATIONPATH/$DATASET/*" "76"
-
-
-	#edit bogus contrl flow to 40
-	edit 40
-	generate "$BCF" "$BCF-$FLA" "$BCF-$FLA-$SUB" "$BCF-$SUB" "$BCF-$SUB-$FLA" "$FLA-$BCF" "$FLA-$BCF-$SUB" "$FLA-$SUB-$BCF" "$SUB-$BCF" "$SUB-$BCF-$FLA" "$SUB-$FLA-$BCF"
-	verifyCountFiles "$GENERATIONPATH/$DATASET/*" "76"
-	edit 100
-	generate "$BCF" "$BCF-$FLA" "$BCF-$FLA-$SUB" "$BCF-$SUB" "$BCF-$SUB-$FLA" "$FLA-$BCF" "$FLA-$BCF-$SUB" "$FLA-$SUB-$BCF" "$SUB-$BCF" "$SUB-$BCF-$FLA" "$SUB-$FLA-$BCF"
-	verifyCountFiles "$GENERATIONPATH/$DATASET/*" "76"
-
-}
-function generateSimple {
-	DATASET='simple-cov'
-	edit 30
-	generate "NONE"
-	generate "$BCF" "$FLA-$BCF" "$BCF-$FLA" "$SUB-$BCF" "$BCF-$SUB" "$FLA-$BCF-$SUB" "$FLA-$SUB-$BCF" "$BCF-$FLA-$SUB" "$BCF-$SUB-$FLA" "$SUB-$FLA-$BCF" "$SUB-$BCF-$FLA" "$SUB" "$FLA" "$SUB-$FLA" "$FLA-$SUB"
-	verifyCountFiles "$GENERATIONPATH/$DATASET/*" "160"
-}
-
 function generateSimple2 {
 	DATASET='simple-cov2'
 
@@ -105,8 +79,6 @@ function generateSimple2 {
 	verifyCountFiles "$GENERATIONPATH/$DATASET/*" "76"
 }
 
-# generateSimple
-# generateMibench
 generateSimple2
 
 function checkoutput {
