@@ -1,9 +1,12 @@
-import argparse
 import pathlib
 import subprocess
 
-from sip_vs_pipeline.datagen.generate_dataset import IMAGE_NAME, GEN_PROTECTED_BINARIES_SH_PATH, SMWYG_GIT_REPOSITORY, \
-    parse_args, validate_output_dir, build_docker_image
+from sip_vs_pipeline.datagen.generate_dataset import IMAGE_NAME, GEN_PROTECTED_BINARIES_SH_PATH, parse_args, validate_output_dir, build_docker_image
+import pathlib
+import subprocess
+
+from sip_vs_pipeline.datagen.generate_dataset import IMAGE_NAME, GEN_PROTECTED_BINARIES_SH_PATH, parse_args, \
+    validate_output_dir, build_docker_image
 
 
 def run_data_generation_script(out_dir):
