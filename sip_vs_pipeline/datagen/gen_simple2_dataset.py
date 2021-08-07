@@ -2,7 +2,7 @@ import pathlib
 import subprocess
 
 from sip_vs_pipeline.datagen.generate_dataset import IMAGE_NAME, GEN_PROTECTED_BINARIES_SH_PATH, parse_args, \
-    validate_output_dir, build_docker_image
+    build_docker_image
 
 
 def run_data_generation_script(out_dir):
@@ -21,7 +21,6 @@ def run_data_generation_script(out_dir):
 def main():
     args = parse_args()
     out_dir = pathlib.Path(args.output_dir)
-    validate_output_dir(out_dir, args.force)
     build_docker_image()
     run_data_generation_script(out_dir)
 
