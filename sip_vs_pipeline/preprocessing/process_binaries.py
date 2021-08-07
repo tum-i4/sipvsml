@@ -12,7 +12,7 @@ from sip_vs_pipeline.utils import get_protected_bc_dirs
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Preprocess protected binary programs')
-    parser.add_argument('labeled_bc_dir', help='Directory where labeled binaries are stored')
+    parser.add_argument('labeled_bc_dir', help='Directory where labeled datasets stored')
     parser.add_argument(
         '--preprocessors', choices=[
             'compress_csv', 'code2vec', 'general_ir', 'disassemble_bc', 'remove_raw_bc', 'remove_csv_files', 'pdg',
@@ -22,6 +22,9 @@ def parse_args():
     parser.add_argument(
         '--run_sequentially', default=False, action='store_true',
         help='Run processing sequentially, in a single process'
+    )
+    parser.add_argument(
+        '--dataset', help='Dataset name to process', required=False
     )
     args = parser.parse_args()
     return args
@@ -60,7 +63,7 @@ def main():
     labeled_bc_dir = pathlib.Path(args.labeled_bc_dir)
 
     preprocessor = create_preprocessor(args.preprocessors, labeled_bc_dir)
-    bc_dirs = list(get_protected_bc_dirs(labeled_bc_dir))
+    bc_dirs = list(get_protected_bc_dirs(labeled_bc_dir, args.dataset))
 
     if args.run_sequentially:
         for bc_dir in tqdm(bc_dirs, desc='preprocessing binaries'):

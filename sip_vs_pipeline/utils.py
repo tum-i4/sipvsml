@@ -51,8 +51,9 @@ def get_files_from_bc_dir(labeled_bc_dir, file_name='blocks.csv'):
             yield data_dir / file_name
 
 
-def get_protected_bc_dirs(labeled_bc_dir):
-    for sub_folder in labeled_bc_dir.iterdir():
+def get_protected_bc_dirs(labeled_bc_dir, dataset=None):
+    datasets = [labeled_bc_dir / dataset] if dataset is not None else labeled_bc_dir.iterdir()
+    for sub_folder in datasets:
         for data_dir in sub_folder.iterdir():
             yield data_dir
 
