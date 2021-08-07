@@ -58,8 +58,9 @@ def get_protected_bc_dirs(labeled_bc_dir, dataset=None):
             yield data_dir
 
 
-def get_fold_dirs(labeled_bc_dir):
-    for sub_folder in labeled_bc_dir.iterdir():
+def get_fold_dirs(labeled_bc_dir, dataset=None):
+    datasets = [labeled_bc_dir / dataset] if dataset is not None else labeled_bc_dir.iterdir()
+    for sub_folder in datasets:
         for data_dir in sub_folder.iterdir():
             for sub_dir in (data_dir / 'folds').iterdir():
                 if sub_dir.name.startswith('k_fold_'):

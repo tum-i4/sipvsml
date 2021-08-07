@@ -57,6 +57,9 @@ def parse_args():
         '--max_workers', default=None, required=False, type=int, help='Max worker processes to spawn for Process Pool'
     )
     parser.add_argument('labeled_bc_dir', help='Directory where labeled binaries are stored')
+    parser.add_argument(
+        '--dataset', help='Dataset name to process', required=False
+    )
     args = parser.parse_args()
     return args
 
@@ -93,7 +96,7 @@ def process_blocks(args):
 def main():
     args = parse_args()
     labeled_bc_dir = pathlib.Path(args.labeled_bc_dir)
-    all_fold_dirs = get_fold_dirs(labeled_bc_dir)
+    all_fold_dirs = get_fold_dirs(labeled_bc_dir, args.dataset)
 
     extractor_name = args.feature_extractor
 
