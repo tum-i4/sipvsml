@@ -1,10 +1,6 @@
 import pathlib
 import subprocess
 
-from sip_vs_pipeline.datagen.generate_dataset import IMAGE_NAME, GEN_PROTECTED_BINARIES_SH_PATH, parse_args, validate_output_dir, build_docker_image
-import pathlib
-import subprocess
-
 from sip_vs_pipeline.datagen.generate_dataset import IMAGE_NAME, GEN_PROTECTED_BINARIES_SH_PATH, parse_args, \
     validate_output_dir, build_docker_image
 
