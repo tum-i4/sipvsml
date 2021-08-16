@@ -1,6 +1,6 @@
 import pandas as pd
 
-from sip_vs_pipeline.utils import read_blocks_df, read_relations_df, blocks_for_fold
+from sip_vs_pipeline.utils import read_relations_df, blocks_for_fold
 
 
 def get_data_csv_files(labeled_bc_dir, csv_file_name):
