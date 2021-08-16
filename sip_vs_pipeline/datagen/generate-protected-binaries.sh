@@ -5,7 +5,7 @@ SUB='SUB'
 BCF='BCF'
 
 PERC=30
-DATASET='simple-cov'
+DATASET='simple-cov2'
 GENERATIONPATH='LABELED-BCs/'
 function edit {
 	echo switched to $1
@@ -23,7 +23,6 @@ function waitforjobs {
 function generate {
 
 	for ds in $DATASET;
-		#for ds in 'simple-cov';
 	do
 		for prot in 'OH' 'CFI' 'SC' ;
 			#
@@ -80,17 +79,3 @@ function generateSimple2 {
 }
 
 generateSimple2
-
-function checkoutput {
-        if [ $? -ne 0 ]; then
-                echo $1
-                exit 1
-        fi
-}
-for ds in 'simple-cov' 'mibench-cov'; do
-        waitforjobs $(nproc)
-        echo SPAWNING $(nproc) processes to generate CSV files from labled BC samples
-        bash ../program-dependence-graph/collect-seg-dataset-features.sh LABELED-BCs/$ds skip > /dev/null &
-done
-waitforjobs 1
-checkoutput 'Failed to generate CSV files'
