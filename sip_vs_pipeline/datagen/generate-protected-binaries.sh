@@ -56,6 +56,12 @@ function generateMibench {
 	DATASET='mibench-cov'
   OUT_DIR='mibench-cov'
 
+  cp mibench-dataset-6/* dataset/ &&
+    cp mibench-dataset/* dataset/ &&
+    rm dataset/cjpeg.x.bc && rm dataset/djpeg.x.bc && # Remove programs that cause crash
+    bash coverage-improver.sh dataset mibench-cov/ &&
+    bash combinator.sh mibench-cov/ combinations
+
 	generate "NONE"
 	edit 30
 	generate "$BCF" "$FLA-$BCF" "$BCF-$FLA" "$SUB-$BCF" "$BCF-$SUB" "$FLA-$BCF-$SUB" "$FLA-$SUB-$BCF" "$BCF-$FLA-$SUB" "$BCF-$SUB-$FLA" "$SUB-$FLA-$BCF" "$SUB-$BCF-$FLA" "$SUB" "$FLA" "$SUB-$FLA" "$FLA-$SUB" "$BCF-$FLA"2 "$BCF-$FLA"2"-$SUB"2 "$BCF-$SUB"2"-$FLA"2 
