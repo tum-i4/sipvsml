@@ -33,13 +33,7 @@ def parse_args():
 def create_preprocessor(preprocessors, labeled_bc_dir):
     pps = []
     for pp in preprocessors:
-        if pp == 'compress_csv':
-            pps.append(CompressToZip())
-        elif pp == 'remove_raw_bc':
-            pps.append(RemoveRawBinaries())
-        elif pp == 'remove_csv_files':
-            pps.append(RemoveCsvFiles())
-        elif pp == 'general_ir':
+        if pp == 'general_ir':
             pps.append(Ir2VecInstructionGen())
         elif pp == 'disassemble_bc':
             pps.append(DisassembleBC())
