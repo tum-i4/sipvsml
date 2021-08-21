@@ -43,15 +43,15 @@ class GraphSageSIPLocalizer:
         self.k_folds = k_folds
         self.batch_size = batch_size
 
-    def train(self, data_dict, target_feature_name):
+    def train(self, data_dict, target_feature_name, model_save_path):
         results_data = {
             'data_source': data_dict['data_source'].name,
             'data_dir': data_dict['data_dir'].name,
-            'results': self._run_train(data_dict, target_feature_name)
+            'results': self._run_train(data_dict, target_feature_name, model_save_path)
         }
         return results_data
 
-    def _run_train(self, data_dict, target_feature_name):
+    def _run_train(self, data_dict, target_feature_name, model_save_path):
         all_train_features = data_dict['train']['features'].get()
         train_blocks_df = data_dict['train']['blocks_df'].get()
 
@@ -77,12 +77,13 @@ class GraphSageSIPLocalizer:
         ]
         gnx = build_gnx_network(relations_df)
 
-        _, _, _, _, history, _, out_result = self._train_model(
+        _, model, _, _, history, _, out_result = self._train_model(
             gnx, train_data, val_data, all_features, target_feature_name
         )
         classifier_results.append(out_result['classifier'])
         out_result['classifier'] = average_classifiers(classifier_results)
 
+        model.save(model_save_path)
         return out_result
 
     def _train_model(self, gnx, train_data, test_data, all_features, target_feature_name):
@@ -172,3 +173,9 @@ class GraphSageSIPLocalizer:
         print('fscore: {}'.format(f1))
 
         return generator, model, x_inp, x_out, history, target_encoding, output_results
+
+    def save(self, model_path):
+        pass
+
+    def load(self, model_path):
+        pass

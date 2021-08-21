@@ -13,7 +13,7 @@ def parse_args():
         '--model', choices=['graph_sage'], help='Which model to use', default='graph_sage'
     )
     parser.add_argument(
-        '--use_features', type=str, nargs='+', choices=['ir2vec', 'seg', 'tf_idf', 'code2vec'],
+        '--use_features', type=str, nargs='+', choices=['ir2vec', 'pdg', 'tf_idf', 'code2vec'],
         help='Names of the features to use', required=True
     )
     parser.add_argument(
@@ -37,7 +37,9 @@ def run_train(dataset, model_name, results_file_name, target_feature_name):
             print(f'{results_path} already exists, moving on...')
             continue
         model = create_model(model_name)
-        results_data = model.train(data_dict, target_feature_name)
+
+        model_save_path = results_path.with_suffix('.model')
+        results_data = model.train(data_dict, target_feature_name, model_save_path)
         results_data['features'] = dataset.features_to_use
         write_json(results_data, results_path)
 

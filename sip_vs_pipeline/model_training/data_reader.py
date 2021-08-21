@@ -63,7 +63,7 @@ class SIPSingleObfuscationDataset:
         for feature_name in self.features_to_use:
             if feature_name == 'ir2vec':
                 res[feature_name] = self._read_ir2vec_features(data_dir)
-            elif feature_name == 'seg':
+            elif feature_name == 'pdg':
                 res[feature_name] = self._read_graph_features(data_dir)
             elif feature_name == 'tf_idf':
                 res[feature_name] = self._read_tf_idf_features(data_dir)
@@ -79,10 +79,13 @@ class SIPSingleObfuscationDataset:
         return self._read_features_csv_file(data_dir / 'ir2vec.features.csv.gz')
 
     def _read_graph_features(self, data_dir):
-        return self._read_features_csv_file(data_dir / 'seg.features.csv.gz')
+        return self._read_features_csv_file(data_dir / 'pdg.features.csv.gz')
 
     def _read_tf_idf_features(self, data_dir):
         return self._read_features_csv_file(data_dir / 'tf_idf.features.csv.gz')
+
+    def _read_code2vec_features(self, data_dir):
+        return self._read_features_csv_file(data_dir / 'code2vec.features.csv.gz')
 
     def _read_features_csv_file(self, file_path):
         df = pd.read_csv(file_path, header=None, dtype={0: object}).set_index(0)
@@ -91,9 +94,6 @@ class SIPSingleObfuscationDataset:
 
     def _combine_features(self, features_dict):
         return pd.concat(features_dict.values(), axis=1)
-
-    def _read_code2vec_features(self, data_dir):
-        return self._read_features_csv_file(data_dir / 'code2vec.features.csv.gz')
 
 
 class SIPDataSet:

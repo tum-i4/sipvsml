@@ -12,7 +12,7 @@ from sip_vs_pipeline.utils import get_fold_dirs, CODE2VEC_REPOSITORY_PATH
 
 TF_IDF_FEATURE_EXTRACTOR = 'tf_idf'
 IR2VEC_FEATURE_EXTRACTOR = 'ir2vec'
-SEG_FEATURE_EXTRACTOR = 'seg'
+PDG_FEATURE_EXTRACTOR = 'pdg'
 CODE2VEC_FEATURE_EXTRACTOR = 'code2vec'
 IR2VEC_VOCAB_PATH = pathlib.Path(__file__).parent / 'ir2vec_seed_embeddings.txt'
 
@@ -30,7 +30,7 @@ class TfIdfExtractor(BlockFeatureExtractor):
         return tf_idf_df
 
 
-class SegExtractor(BlockFeatureExtractor):
+class PDGExtractor(BlockFeatureExtractor):
     def __init__(self, name, rewrite=False, num_features=63, cleanup_blocks=True) -> None:
         super().__init__(name, rewrite)
         self._num_features = num_features
@@ -47,7 +47,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Extract features from protected binaries')
     parser.add_argument('--path_to_ir2vec_vocab', help='Path to ir2vec vocabulary', default=IR2VEC_VOCAB_PATH)
     parser.add_argument('--feature_extractor', choices=[
-        CODE2VEC_FEATURE_EXTRACTOR, TF_IDF_FEATURE_EXTRACTOR, IR2VEC_FEATURE_EXTRACTOR, SEG_FEATURE_EXTRACTOR, 'all'
+        CODE2VEC_FEATURE_EXTRACTOR, TF_IDF_FEATURE_EXTRACTOR, IR2VEC_FEATURE_EXTRACTOR, PDG_FEATURE_EXTRACTOR, 'all'
     ], help='Name of the feature extractor to use')
     parser.add_argument(
         '--run_sequentially', default=False, action='store_true',
@@ -69,8 +69,8 @@ def create_feature_extractors(feature_extractor):
         return TfIdfExtractor(TF_IDF_FEATURE_EXTRACTOR)
     if feature_extractor == IR2VEC_FEATURE_EXTRACTOR:
         return IR2VecExtractor(IR2VEC_FEATURE_EXTRACTOR, IR2VEC_VOCAB_PATH)
-    if feature_extractor == SEG_FEATURE_EXTRACTOR:
-        return SegExtractor(SEG_FEATURE_EXTRACTOR)
+    if feature_extractor == PDG_FEATURE_EXTRACTOR:
+        return PDGExtractor(PDG_FEATURE_EXTRACTOR)
     if feature_extractor == CODE2VEC_FEATURE_EXTRACTOR:
         return Code2VecExtractor(CODE2VEC_FEATURE_EXTRACTOR, CODE2VEC_REPOSITORY_PATH)
 
@@ -79,7 +79,7 @@ def create_feature_extractors(feature_extractor):
             'all',
             TfIdfExtractor(TF_IDF_FEATURE_EXTRACTOR),
             IR2VecExtractor(IR2VEC_FEATURE_EXTRACTOR, IR2VEC_VOCAB_PATH),
-            SegExtractor(SEG_FEATURE_EXTRACTOR),
+            PDGExtractor(PDG_FEATURE_EXTRACTOR),
             Code2VecExtractor(CODE2VEC_FEATURE_EXTRACTOR, CODE2VEC_REPOSITORY_PATH)
         )
 
