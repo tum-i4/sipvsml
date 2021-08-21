@@ -5,7 +5,7 @@ from concurrent.futures import ProcessPoolExecutor
 from tqdm import tqdm
 
 from sip_vs_pipeline.preprocessing.pre_processor import ComposePP, Ir2VecInstructionGen, \
-    CompressToZip, RemoveCsvFiles, RemoveRawBinaries, DisassembleBC, Code2VecPreProcessor, PDGPreProcessor, \
+    DisassembleBC, Code2VecPreProcessor, PDGPreProcessor, \
     KFoldSplit, LLVMPassLabels, RemoveLLMetadata
 from sip_vs_pipeline.utils import get_protected_bc_dirs
 
@@ -15,7 +15,7 @@ def parse_args():
     parser.add_argument('labeled_bc_dir', help='Directory where labeled datasets stored')
     parser.add_argument(
         '--preprocessors', choices=[
-            'compress_csv', 'code2vec', 'general_ir', 'disassemble_bc', 'remove_raw_bc', 'remove_csv_files', 'pdg',
+            'code2vec', 'general_ir', 'disassemble_bc', 'pdg',
             'k_fold_split', 'llvm_sip_labels', 'remove_ll_metadata'
         ], nargs='+', help='Which preprocessors to run'
     )
