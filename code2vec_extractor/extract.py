@@ -210,7 +210,9 @@ def print_training_data(basic_block, paths):
         left = up[0].txt
         right = down[-1].txt
 
-        path_str = '^'.join(map(path_node_2_str, up)) + '_' + '_'.join(map(path_node_2_str, down))
+        path_str = '^'.join(map(path_node_2_str, up)) + \
+                   '^' + path_node_2_str(parent) + '_' + \
+                   '_'.join(map(path_node_2_str, down))
         path_strings.append(','.join([left, str(hash_code(path_str)), right]))
 
     print(label, ' '.join(path_strings))
