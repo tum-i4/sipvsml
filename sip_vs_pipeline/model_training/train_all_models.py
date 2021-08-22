@@ -9,6 +9,7 @@ from datetime import datetime
 from tqdm import tqdm
 
 from sip_vs_pipeline.model_training.data_reader import SIPDataSet
+from sip_vs_pipeline.model_training.train_model import __file__ as __train_model_file__
 from sip_vs_pipeline.utils import write_json
 
 
@@ -34,7 +35,7 @@ def run_train_in_subprocess(sub_dataset, features, model_name, results_file_name
     try:
         cmd = [
             'python',
-            'train_model.py',
+            str(pathlib.Path(__train_model_file__).absolute()),
             str(sub_dataset.data_dir),
             '--model', model_name,
             '--use_features', *features,
