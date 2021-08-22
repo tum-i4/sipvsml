@@ -93,7 +93,6 @@ def run_experiments(labeled_bc_dir):
                 str(pathlib.Path(__train_all_models_file__).absolute()),
                 '--model', 'graph_sage',
                 '--use_features', ' '.join(feature_set),
-                '--results_file_name', f"{'__'.join(feature_set)}_results.json",
                 '--num_processes', str(num_processes),
                 str(labeled_bc_dir)
             ]
