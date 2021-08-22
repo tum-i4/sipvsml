@@ -27,10 +27,10 @@ def generate_dataset(dataset_dir):
 
 def run_preprocessing(labeled_bc_dir):
     preprocessors = [
-        'disassemble_bc',
-        'llvm_sip_labels',
-        'remove_ll_metadata',
         'pdg',
+        'disassemble_bc',
+        'remove_ll_metadata',
+        'llvm_sip_labels',
         'general_ir',
         'code2vec',
         'k_fold_split',
