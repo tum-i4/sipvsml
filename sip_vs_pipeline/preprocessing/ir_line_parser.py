@@ -729,7 +729,13 @@ class FNegUnaryOperatorCommand(Command):
 
 
 class BinaryCommand(Command):
+    exclusion_pattern = re.compile(r'(\(.+\))')
+
     def _parse_line(self):
+        find = self.exclusion_pattern.findall(self.line)
+        if len(find) > 0:
+            self.line = self.line.replace(find[0], '')
+
         spl = [x.strip() for x in self.line.split()]
         ty, op1, op2 = spl[-3:]
         self.type = parse_type(ty)
