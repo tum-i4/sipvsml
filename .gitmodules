@@ -1,3 +1,6 @@
 [submodule "code2vec_extractor/llvm_ir_parser"]
 	path = code2vec_extractor/llvm_ir_parser
 	url = https://github.com/Megatvini/ll.git
+[submodule "code2vec"]
+	path = code2vec
+	url = https://github.com/Megatvini/code2vec.git
