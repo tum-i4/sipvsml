@@ -93,7 +93,10 @@ class SIPSingleObfuscationDataset:
         return df
 
     def _combine_features(self, features_dict):
-        return pd.concat(features_dict.values(), axis=1)
+        df = pd.concat(features_dict.values(), axis=1)
+        # some version of pandas seems to be dropping index name here
+        df.index.rename('uid', inplace=True)
+        return df
 
 
 class SIPDataSet:
