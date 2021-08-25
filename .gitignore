@@ -285,3 +285,4 @@ pip-selfcheck.json
 # End of https://www.toptal.com/developers/gitignore/api/python,pycharm,jupyternotebooks,virtualenv,venv
 
 dl_training/runs/*
+/.idea/
