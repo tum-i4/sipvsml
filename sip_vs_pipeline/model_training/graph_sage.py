@@ -77,9 +77,10 @@ class GraphSageSIPLocalizer:
         ]
         gnx = build_gnx_network(relations_df)
 
-        _, model, _, _, history, _, out_result = self._train_model(
+        _, model, _, _, _, _, out_result = self._train_model(
             gnx, train_data, val_data, all_features, target_feature_name
         )
+
         classifier_results.append(out_result['classifier'])
         out_result['classifier'] = average_classifiers(classifier_results)
 
@@ -171,6 +172,12 @@ class GraphSageSIPLocalizer:
         print('precision: {}'.format(precision))
         print('recall: {}'.format(recall))
         print('fscore: {}'.format(f1))
+
+        output_results['history'] = {
+            'epochs': history.epoch,
+            'training_log': history.history,
+            'training_params': history.params
+        }
 
         return generator, model, x_inp, x_out, history, target_encoding, output_results
 
