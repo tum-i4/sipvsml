@@ -131,21 +131,3 @@ class SIPParallelDataset:
                     'features': val_fold_data['val']['features']
                 },
             }
-
-
-class SIPDataSet:
-    def __init__(self, labeled_bc_dir, features_to_use, target_feature_name='subject') -> None:
-        super().__init__()
-        self._labeled_bc_dir = labeled_bc_dir
-        self._features_to_use = features_to_use
-        self.target_feature_name = target_feature_name
-
-    def iter_sub_datasets(self):
-        for sub_folder in self._labeled_bc_dir.iterdir():
-            for data_dir in (self._labeled_bc_dir / sub_folder).iterdir():
-                dt = SIPSingleObfuscationDataset(
-                    data_dir,
-                    self._features_to_use,
-                    self.target_feature_name,
-                )
-                yield dt

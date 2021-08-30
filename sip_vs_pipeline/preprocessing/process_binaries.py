@@ -7,7 +7,7 @@ from tqdm import tqdm
 from sip_vs_pipeline.preprocessing.pre_processor import ComposePP, Ir2VecInstructionGen, \
     DisassembleBC, Code2VecPreProcessor, PDGPreProcessor, \
     KFoldSplit, LLVMPassLabels, RemoveLLMetadata
-from sip_vs_pipeline.utils import get_protected_bc_dirs
+from sip_vs_pipeline.utils import get_obfuscation_dirs
 
 
 def parse_args():
@@ -57,7 +57,7 @@ def main():
     labeled_bc_dir = pathlib.Path(args.labeled_bc_dir)
 
     preprocessor = create_preprocessor(args.preprocessors, labeled_bc_dir)
-    bc_dirs = list(get_protected_bc_dirs(labeled_bc_dir, args.dataset))
+    bc_dirs = list(get_obfuscation_dirs(labeled_bc_dir, args.dataset))
 
     if args.run_sequentially:
         for bc_dir in tqdm(bc_dirs, desc='preprocessing binaries'):
