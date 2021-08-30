@@ -1,7 +1,7 @@
 import argparse
 import pathlib
 
-from sip_vs_pipeline.model_training.data_reader import SIPSingleObfuscationDataset
+from sip_vs_pipeline.model_training.data_reader import SIPSingleObfuscationDataset, SIPParallelDataset
 from sip_vs_pipeline.model_training.graph_sage import GraphSageSIPLocalizer
 from sip_vs_pipeline.utils import write_json
 
@@ -19,6 +19,11 @@ def parse_args():
     parser.add_argument(
         '--results_file_name', type=str, required=True,
         help='Names for the results file (graph_sage model creates one per obfuscation)'
+    )
+    parser.add_argument(
+        '--val_features_data_dir', type=str, required=False,
+        help='Separate dataset for validation, the results will be saved there. If this argument is passed, '
+             'both <features_data_dir>/train and <features_data_dir>/val will be used for training.'
     )
     args = parser.parse_args()
     return args
@@ -44,8 +49,14 @@ def run_train(dataset, model_name, results_file_name, target_feature_name):
         write_json(results_data, results_path)
 
 
-def run(features_data_dir, model_name, features, results_file_name):
+def run(features_data_dir, val_features_data_dir, model_name, features, results_file_name):
     dataset = SIPSingleObfuscationDataset(features_data_dir, features)
+    if val_features_data_dir is not None:
+        dataset = SIPParallelDataset(
+            dataset,
+            SIPSingleObfuscationDataset(val_features_data_dir, features)
+        )
+
     target_feature_name = dataset.target_feature_name
     run_train(dataset, model_name, results_file_name, target_feature_name)
 
@@ -56,7 +67,8 @@ def main():
     model_name = args.model
     features = args.use_features
     results_file_name = args.results_file_name
-    run(data_dir, model_name, features, results_file_name)
+    val_features_data_dir = None if args.val_features_data_dir is None else pathlib.Path(args.val_features_data_dir)
+    run(data_dir, val_features_data_dir, model_name, features, results_file_name)
 
 
 if __name__ == '__main__':

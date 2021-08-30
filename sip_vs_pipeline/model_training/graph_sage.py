@@ -62,8 +62,6 @@ class GraphSageSIPLocalizer:
         val_blocks_df = data_dict['val']['blocks_df'].get()
 
         classifier_results = []
-        train_data = pd.merge(train_blocks_df, all_train_features, on='uid')
-        val_data = pd.merge(val_blocks_df, all_val_features, on='uid')
         all_features = pd.concat([all_train_features, all_val_features], axis=0)
 
         # remove unused graph edges
@@ -78,7 +76,7 @@ class GraphSageSIPLocalizer:
         gnx = build_gnx_network(relations_df)
 
         _, model, _, _, _, _, out_result = self._train_model(
-            gnx, train_data, val_data, all_features, target_feature_name
+            gnx, train_blocks_df, val_blocks_df, all_features, target_feature_name
         )
 
         classifier_results.append(out_result['classifier'])

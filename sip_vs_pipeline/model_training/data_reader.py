@@ -46,11 +46,11 @@ class SIPSingleObfuscationDataset:
             'val': self._get_sub_data_dir(fold_dir / 'val', combine_features),
         }
 
-    def _get_sub_data_dir(self, features_dir, combine_features):
+    def _get_sub_data_dir(self, fold_dir, combine_features):
         relations_file_path = self.data_dir / 'relations.csv.gz'
-        lazy_blocks_df = LazyVariable(lambda: blocks_for_fold(features_dir)[[self.target_feature_name]])
+        lazy_blocks_df = LazyVariable(lambda: blocks_for_fold(fold_dir)[[self.target_feature_name]])
         lazy_relations_df = LazyVariable(lambda: read_relations_df(relations_file_path))
-        lazy_features_df = LazyVariable(lambda: self._read_features(features_dir, combine_features))
+        lazy_features_df = LazyVariable(lambda: self._read_features(fold_dir, combine_features))
 
         return {
             'blocks_df': lazy_blocks_df,
@@ -97,6 +97,40 @@ class SIPSingleObfuscationDataset:
         # some version of pandas seems to be dropping index name here
         df.index.rename('uid', inplace=True)
         return df
+
+
+class SIPParallelDataset:
+    def __init__(self, train_dataset, val_dataset) -> None:
+        self.train_dataset = train_dataset
+        self.val_dataset = val_dataset
+        self.target_feature_name = train_dataset.target_feature_name
+        self.features_to_use = train_dataset.features_to_use
+
+    def iter_fold_data_dict(self):
+        zipped_fold_data = zip(self.train_dataset.iter_fold_data_dict(), self.val_dataset.iter_fold_data_dict())
+
+        def concat_lazy_dataframes(df1, df2):
+            return pd.concat([df1.get(), df2.get()], axis=0)
+
+        for train_fold_data, val_fold_data in zipped_fold_data:
+            rel1 = train_fold_data['val']['relations_df']
+            rel2 = val_fold_data['val']['relations_df']
+
+            yield {
+                'data_source': train_fold_data['data_source'],
+                'data_dir': train_fold_data['data_dir'],
+                'fold_dir': val_fold_data['fold_dir'],
+                'train': {
+                    'blocks_df': train_fold_data['train']['blocks_df'],
+                    'relations_df': LazyVariable(lambda: concat_lazy_dataframes(rel1, rel2)),
+                    'features': train_fold_data['train']['features']
+                },
+                'val': {
+                    'blocks_df': val_fold_data['val']['blocks_df'],
+                    'relations_df': LazyVariable(lambda: concat_lazy_dataframes(rel1, rel2)),
+                    'features': val_fold_data['val']['features']
+                },
+            }
 
 
 class SIPDataSet:
