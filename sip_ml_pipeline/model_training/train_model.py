@@ -1,9 +1,9 @@
 import argparse
 import pathlib
 
-from sip_vs_pipeline.model_training.data_reader import SIPSingleObfuscationDataset, SIPParallelDataset
-from sip_vs_pipeline.model_training.graph_sage import GraphSageSIPLocalizer
-from sip_vs_pipeline.utils import write_json
+from sip_ml_pipeline.model_training.data_reader import SIPSingleObfuscationDataset, SIPParallelDataset
+from sip_ml_pipeline.model_training.graph_sage import GraphSageSIPLocalizer
+from sip_ml_pipeline.utils import write_json
 
 
 def parse_args():

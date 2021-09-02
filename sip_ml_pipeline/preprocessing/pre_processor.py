@@ -6,8 +6,8 @@ import re
 import subprocess
 from collections import defaultdict
 
-from sip_vs_pipeline.preprocessing.ir_line_parser import generalize_ir_line
-from sip_vs_pipeline.utils import read_blocks_df, write_blocks_df, write_relations_df, read_relations_df, \
+from sip_ml_pipeline.preprocessing.ir_line_parser import generalize_ir_line
+from sip_ml_pipeline.utils import read_blocks_df, write_blocks_df, write_relations_df, read_relations_df, \
     get_program_name_from_filename, CODE2VEC_REPOSITORY_PATH, LLVM_MODULE_LABELLING_PASS_SO_PATH
 
 

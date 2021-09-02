@@ -2,11 +2,11 @@ import os
 import pathlib
 import subprocess
 
-from sip_vs_pipeline.datagen.generate_dataset import __file__ as __datagen_file__
-from sip_vs_pipeline.datagen.generate_dataset import parse_args
-from sip_vs_pipeline.feature_extraction.extract_features import __file__ as __feature_extraction_file__
-from sip_vs_pipeline.model_training.train_all_models import __file__ as __train_all_models_file__
-from sip_vs_pipeline.preprocessing.process_binaries import __file__ as __preprocessing_file__
+from sip_ml_pipeline.datagen.generate_dataset import __file__ as __datagen_file__
+from sip_ml_pipeline.datagen.generate_dataset import parse_args
+from sip_ml_pipeline.feature_extraction.extract_features import __file__ as __feature_extraction_file__
+from sip_ml_pipeline.model_training.train_all_models import __file__ as __train_all_models_file__
+from sip_ml_pipeline.preprocessing.process_binaries import __file__ as __preprocessing_file__
 
 
 def run_bash_command(cmd):

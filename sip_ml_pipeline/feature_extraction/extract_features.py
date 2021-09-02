@@ -4,11 +4,11 @@ from concurrent.futures import ProcessPoolExecutor
 
 from tqdm import tqdm
 
-from sip_vs_pipeline.feature_extraction.code2vec import Code2VecExtractor
-from sip_vs_pipeline.feature_extraction.extractor_base import CompositeExtractor, BlockFeatureExtractor
-from sip_vs_pipeline.feature_extraction.ir2vec import IR2VecExtractor
-from sip_vs_pipeline.feature_extraction.tfidf import extract_tf_idf_memory_friendly
-from sip_vs_pipeline.utils import get_fold_dirs, CODE2VEC_REPOSITORY_PATH
+from sip_ml_pipeline.feature_extraction.code2vec import Code2VecExtractor
+from sip_ml_pipeline.feature_extraction.extractor_base import CompositeExtractor, BlockFeatureExtractor
+from sip_ml_pipeline.feature_extraction.ir2vec import IR2VecExtractor
+from sip_ml_pipeline.feature_extraction.tfidf import extract_tf_idf_memory_friendly
+from sip_ml_pipeline.utils import get_fold_dirs, CODE2VEC_REPOSITORY_PATH
 
 TF_IDF_FEATURE_EXTRACTOR = 'tf_idf'
 IR2VEC_FEATURE_EXTRACTOR = 'ir2vec'

@@ -1,4 +1,4 @@
-from sip_vs_pipeline.utils import blocks_for_fold
+from sip_ml_pipeline.utils import blocks_for_fold
 
 
 class FeatureExtractor:

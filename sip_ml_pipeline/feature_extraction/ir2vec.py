@@ -3,7 +3,7 @@ import json
 import numpy as np
 import pandas as pd
 
-from sip_vs_pipeline.feature_extraction.extractor_base import BlockFeatureExtractor
+from sip_ml_pipeline.feature_extraction.extractor_base import BlockFeatureExtractor
 
 
 class IR2VecExtractor(BlockFeatureExtractor):

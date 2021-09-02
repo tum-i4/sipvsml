@@ -8,8 +8,8 @@ from datetime import datetime
 
 from tqdm import tqdm
 
-from sip_vs_pipeline.model_training.train_model import __file__ as __train_model_file__
-from sip_vs_pipeline.utils import write_json, get_obfuscation_dirs
+from sip_ml_pipeline.model_training.train_model import __file__ as __train_model_file__
+from sip_ml_pipeline.utils import write_json, get_obfuscation_dirs
 
 
 def parse_args():
@@ -64,10 +64,10 @@ def run_train_parallel(dataset, features, model_name, results_file_name, num_pro
     with tqdm(total=len(sub_datasets), desc='Training parallel models') as p_bar:
         with ThreadPoolExecutor(num_processes) as thread_pool:
             for train_ds, val_ds in sub_datasets:
-                thread_pool.submit(
-                    run_train_in_subprocess, train_ds, val_ds, features, model_name, results_file_name, p_bar
-                )
-                # run_train_in_subprocess(train_ds, val_ds, features, model_name, results_file_name, p_bar)
+                # thread_pool.submit(
+                #     run_train_in_subprocess, train_ds, val_ds, features, model_name, results_file_name, p_bar
+                # )
+                run_train_in_subprocess(train_ds, val_ds, features, model_name, results_file_name, p_bar)
 
 
 def get_dataset(labeled_bc_dir, run_parallel_experiment):

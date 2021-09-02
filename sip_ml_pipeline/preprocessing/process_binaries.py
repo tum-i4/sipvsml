@@ -4,10 +4,10 @@ from concurrent.futures import ProcessPoolExecutor
 
 from tqdm import tqdm
 
-from sip_vs_pipeline.preprocessing.pre_processor import ComposePP, Ir2VecInstructionGen, \
+from sip_ml_pipeline.preprocessing.pre_processor import ComposePP, Ir2VecInstructionGen, \
     DisassembleBC, Code2VecPreProcessor, PDGPreProcessor, \
     KFoldSplit, LLVMPassLabels, RemoveLLMetadata
-from sip_vs_pipeline.utils import get_obfuscation_dirs
+from sip_ml_pipeline.utils import get_obfuscation_dirs
 
 
 def parse_args():

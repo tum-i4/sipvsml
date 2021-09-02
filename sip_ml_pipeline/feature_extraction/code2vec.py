@@ -5,8 +5,8 @@ import subprocess
 
 import pandas as pd
 
-from sip_vs_pipeline.feature_extraction.extractor_base import FeatureExtractor
-from sip_vs_pipeline.utils import read_json, get_program_name_from_filename
+from sip_ml_pipeline.feature_extraction.extractor_base import FeatureExtractor
+from sip_ml_pipeline.utils import read_json, get_program_name_from_filename
 
 
 def move_file(src_path, dst_path, block_size=1024*1024*8):
