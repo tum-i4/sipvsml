@@ -64,10 +64,10 @@ def run_train_parallel(dataset, features, model_name, results_file_name, num_pro
     with tqdm(total=len(sub_datasets), desc='Training parallel models') as p_bar:
         with ThreadPoolExecutor(num_processes) as thread_pool:
             for train_ds, val_ds in sub_datasets:
-                # thread_pool.submit(
-                #     run_train_in_subprocess, train_ds, val_ds, features, model_name, results_file_name, p_bar
-                # )
-                run_train_in_subprocess(train_ds, val_ds, features, model_name, results_file_name, p_bar)
+                thread_pool.submit(
+                    run_train_in_subprocess, train_ds, val_ds, features, model_name, results_file_name, p_bar
+                )
+                # run_train_in_subprocess(train_ds, val_ds, features, model_name, results_file_name, p_bar)
 
 
 def get_dataset(labeled_bc_dir, run_parallel_experiment):
