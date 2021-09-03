@@ -79,9 +79,7 @@ def run_experiments(labeled_bc_dir):
         ('ir2vec',),
 
         ('pdg', 'tf_idf'),
-        ('pdg', 'code2vec'),
-        ('pdg', 'ir2vec'),
-
+        ('pdg', 'tf_idf', 'ir2vec'),
         ('pdg', 'tf_idf', 'ir2vec', 'code2vec'),
     ]
     # Progressively reduce max_workers to compensate for possible OOM crashes
