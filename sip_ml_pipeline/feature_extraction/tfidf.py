@@ -154,7 +154,10 @@ def extract_tf_idf_memory_friendly(df, maxfeatures=128, data_path='', tokenexten
     for t in tokens:
         # print(t)
         if len(t) > 1 and len(t.split('\t')) > 2:
-            tokenTuples.append((int(t.split('\t')[0]), int(t.split('\t')[2])))
+            try:
+                tokenTuples.append((int(t.split('\t')[0]), int(t.split('\t')[2])))
+            except ValueError:
+                continue
     # Now sort them descendingly
     # print tokenTuples #TODO: Remove me!!
     tokenTuples.sort(key=functools.cmp_to_key(cmpTuple))
