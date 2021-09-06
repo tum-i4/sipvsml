@@ -13,14 +13,14 @@ def parse_args():
     return args
 
 
-def find_results_json_files(path):
+def find_results_json_files(path, filter_fn=None):
     if path.is_file():
-        if path.name.endswith('results.json'):
+        if path.name.endswith('results.json') and (filter_fn is None or filter_fn(path)):
             with open(path) as inp:
                 yield json.load(inp)
     else:
         for child in path.iterdir():
-            yield from find_results_json_files(child)
+            yield from find_results_json_files(child, filter_fn)
 
 
 def get_obfs_label_from_data_dir(data_dir):
