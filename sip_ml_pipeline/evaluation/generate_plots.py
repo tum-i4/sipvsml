@@ -66,7 +66,7 @@ def get_label_stats(sip_labels_file_path):
     return counter
 
 
-def get_obfuscation_stats(labeled_bc_dir):
+def get_obfuscation_stats(labeled_bc_dir, filter_src_dataset=None):
     data = []
     for obfs_dir in get_protected_dirs(labeled_bc_dir):
         ll_files = [file for file in obfs_dir.iterdir() if file.suffix == '.ll']
@@ -75,10 +75,14 @@ def get_obfuscation_stats(labeled_bc_dir):
             if protection not in ('CFI', 'OH', 'SC'):
                 protection = 'NONE'
 
+            src_dataset = file.parts[-3]
+            if filter_src_dataset is not None and src_dataset != filter_src_dataset:
+                continue
+
             label_stats = get_label_stats(file.with_suffix('.sip_labels'))
             data.append({
                 'file': file,
-                'src_dataset': file.parts[-3],
+                'src_dataset': src_dataset,
                 'obfs': get_obfs_label_from_data_dir(obfs_dir.name),
                 'protection': protection,
                 'num_lines': count_lines(file),
@@ -86,21 +90,22 @@ def get_obfuscation_stats(labeled_bc_dir):
                 'protection_blocks': sum([v for k, v in label_stats.items() if k != 'none'])
             })
     df = pd.DataFrame(data)
-    stats = df[df['protection'] == 'NONE'] \
-        .groupby(['obfs']) \
+
+    stats = df \
+        .groupby(['protection', 'obfs']) \
         .agg({'num_blocks': 'sum', 'num_lines': 'sum', 'file': 'count'}) \
-        .reset_index().sort_values(['obfs'], ascending=False)
+        .reset_index()\
+        .sort_values(['obfs'], ascending=False)
 
     stats['avg_ir_lines'] = stats['num_lines'] / stats['file']
 
-    no_obfs_avg_lines = float(stats[stats['obfs'] == 'NONE']['avg_ir_lines'])
+    no_obfs_avg_lines = float(stats[(stats['obfs'] == 'NONE') & (stats['protection'] == 'NONE')]['avg_ir_lines'])
 
     stats['avg_ir_lines_increase'] = (stats['avg_ir_lines'] / no_obfs_avg_lines - 1.0) * 100
     stats.sort_values('avg_ir_lines', inplace=True)
 
-    stats = stats[['obfs', 'num_blocks', 'avg_ir_lines', 'avg_ir_lines_increase']]
-    # stats = stats[stats['obfs'].map(lambda x: '-' not in x)]
-    stats.columns = ['Obfuscation', 'Blocks', 'Avg IR Lines / Program', 'Avg % IR Lines Incr.']
+    stats = stats[['protection', 'obfs', 'num_blocks', 'avg_ir_lines', 'avg_ir_lines_increase']]
+    stats.columns = ['Protection', 'Obfuscation', 'Blocks', 'Avg IR Lines / Program', 'Avg % IR Lines Incr.']
     return stats
 
 
