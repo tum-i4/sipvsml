@@ -99,16 +99,37 @@ def run_experiments(labeled_bc_dir):
         num_processes //= 2
 
 
+def run_mibench_train_simple_eval(labeled_bc_dir):
+    features = ('pdg', 'tf_idf', 'ir2vec', 'code2vec')
+
+    # Progressively reduce max_workers to compensate for possible OOM crashes
+    num_processes = os.cpu_count()
+    while num_processes > 1:
+        cmd = [
+            'python3',
+            str(pathlib.Path(__train_all_models_file__).absolute()),
+            '--model', 'graph_sage',
+            '--use_features', ' '.join(features),
+            '--num_processes', str(num_processes),
+            str(labeled_bc_dir),
+            '--run_parallel_data_experiment',
+            str(pathlib.Path(__train_all_models_file__).absolute())
+        ]
+        print(' '.join(cmd))
+        run_bash_command(cmd)
+        num_processes //= 2
+
+
 def main():
     args = parse_args()
     dataset_dir = pathlib.Path(args.output_dir)
-
-    generate_dataset(dataset_dir)
-
     labeled_bc_dir = dataset_dir / 'LABELED-BCs'
-    run_preprocessing(labeled_bc_dir)
-    run_feature_extraction(labeled_bc_dir)
-    run_experiments(labeled_bc_dir)
+
+    # generate_dataset(dataset_dir)
+    # run_preprocessing(labeled_bc_dir)
+    # run_feature_extraction(labeled_bc_dir)
+    # run_experiments(labeled_bc_dir)
+    run_mibench_train_simple_eval(labeled_bc_dir)
 
 
 if __name__ == '__main__':
