@@ -107,27 +107,48 @@ class SIPParallelDataset:
         self.features_to_use = train_dataset.features_to_use
 
     def iter_fold_data_dict(self):
-        zipped_fold_data = zip(self.train_dataset.iter_fold_data_dict(), self.val_dataset.iter_fold_data_dict())
-
-        def concat_lazy_dataframes(df1, df2):
-            return pd.concat([df1.get(), df2.get()], axis=0)
+        zipped_fold_data = zip(
+            self.train_dataset.iter_fold_data_dict(),
+            self.val_dataset.iter_fold_data_dict()
+        )
 
         for train_fold_data, val_fold_data in zipped_fold_data:
             rel1 = train_fold_data['val']['relations_df']
             rel2 = val_fold_data['val']['relations_df']
+
+            relation_df = LazyVariable(lambda: self.concat_lazy_dataframes(rel1, rel2))
 
             yield {
                 'data_source': train_fold_data['data_source'],
                 'data_dir': train_fold_data['data_dir'],
                 'fold_dir': val_fold_data['fold_dir'],
                 'train': {
-                    'blocks_df': train_fold_data['train']['blocks_df'],
-                    'relations_df': LazyVariable(lambda: concat_lazy_dataframes(rel1, rel2)),
-                    'features': train_fold_data['train']['features']
+                    'blocks_df': LazyVariable(lambda: self.concat_lazy_dataframes(
+                        train_fold_data['train']['blocks_df'], val_fold_data['train']['blocks_df']
+                    )),
+                    'relations_df': relation_df,
+                    'features': LazyVariable(lambda: self.concat_lazy_dataframes(
+                        train_fold_data['train']['features'], val_fold_data['train']['features']
+                    )),
                 },
                 'val': {
                     'blocks_df': val_fold_data['val']['blocks_df'],
-                    'relations_df': LazyVariable(lambda: concat_lazy_dataframes(rel1, rel2)),
+                    'relations_df': relation_df,
                     'features': val_fold_data['val']['features']
-                },
+                }
             }
+
+    @staticmethod
+    def concat_lazy_dataframes(df1, df2):
+        return pd.concat([df1.get(), df2.get()], axis=0)
+
+    def combine_train_and_val_features(self, fold_data, relations_df):
+        return {
+            'blocks_df': LazyVariable(lambda: self.concat_lazy_dataframes(
+                fold_data['train']['blocks_df'], fold_data['val']['blocks_df']
+            )),
+            'relations_df': relations_df,
+            'features': LazyVariable(lambda: self.concat_lazy_dataframes(
+                fold_data['train']['features'], fold_data['val']['features']
+            ))
+        }
