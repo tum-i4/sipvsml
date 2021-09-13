@@ -80,6 +80,7 @@ class GraphSageSIPLocalizer:
         )
 
         classifier_results.append(out_result['classifier'])
+        out_result['full_classifier_results'] = out_result['classifier']
         out_result['classifier'] = average_classifiers(classifier_results)
 
         model.save(model_save_path)
