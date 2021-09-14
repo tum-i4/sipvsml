@@ -33,16 +33,22 @@ def get_obfs_label_from_data_dir(data_dir):
         .replace('SUB', 'IS')
 
 
-def reconcile_results_into_dataframe(results_list):
+def reconcile_results_into_dataframe(results_list, include_precision_recall=False):
     data = []
     for res_data in results_list:
         obfuscation = get_obfs_label_from_data_dir(res_data['data_dir'])
-        data.append({
+        entry = {
             'data_source': res_data['data_source'],
             'obfuscation': obfuscation,
             'features': ' + '.join(res_data['features']),
             **res_data['results']['classifier']
-        })
+        }
+        if include_precision_recall and 'full_classifier_results' in res_data['results']:
+            for x in res_data['results']['full_classifier_results']:
+                entry['precision_' + x['label']] = x['precision']
+                entry['recall_' + x['label']] = x['recall']
+
+        data.append(entry)
     return pd.DataFrame(data)
 
 
@@ -112,9 +118,9 @@ def get_obfuscation_stats(labeled_bc_dir, filter_src_dataset=None):
 def main():
     args = parse_args()
     labeled_bc_dir = pathlib.Path(args.labeled_bc_dir)
-    result_files = find_results_json_files(labeled_bc_dir)
+    result_files = find_results_json_files(labeled_bc_dir, lambda path: path.name.startswith('parallel'))
     res = list(result_files)
-    df = reconcile_results_into_dataframe(res)
+    df = reconcile_results_into_dataframe(res, True)
     print(df)
 
 
