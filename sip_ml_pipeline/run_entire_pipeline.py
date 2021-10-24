@@ -125,10 +125,10 @@ def main():
     dataset_dir = pathlib.Path(args.output_dir)
     labeled_bc_dir = dataset_dir / 'LABELED-BCs'
 
-    # generate_dataset(dataset_dir)
-    # run_preprocessing(labeled_bc_dir)
-    # run_feature_extraction(labeled_bc_dir)
-    # run_experiments(labeled_bc_dir)
+    generate_dataset(dataset_dir)
+    run_preprocessing(labeled_bc_dir)
+    run_feature_extraction(labeled_bc_dir)
+    run_experiments(labeled_bc_dir)
     run_mibench_train_simple_eval(labeled_bc_dir)
 
 
